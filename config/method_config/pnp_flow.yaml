@@ -1,0 +1,6 @@
+METHOD:
+    steps_pnp: 100
+    lr_pnp: 1.0
+    gamma_style: 'alpha_1_minus_t'
+    num_samples: 5
+    alpha: 1.0

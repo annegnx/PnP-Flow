@@ -1,0 +1,7 @@
+METHOD:
+    steps_euler: 6
+    lmbda: 0.01
+    alpha: 0.1
+    max_iter: 20
+    LBFGS_iter: 20
+    start_time: 0.0

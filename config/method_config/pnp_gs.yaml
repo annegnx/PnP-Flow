@@ -1,0 +1,7 @@
+METHOD:
+    max_iter: 30
+    lr_pnp: 1.0
+    alpha : 0.5 # average denoiser operator (1-alpha)Id + alpha D
+    algo: 'pgd'
+    sigma_factor: 1.0
+

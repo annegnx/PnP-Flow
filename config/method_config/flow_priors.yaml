@@ -1,0 +1,6 @@
+METHOD:
+    start_time: 0.0
+    K: 1
+    N: 100
+    lmbda: 1000
+    eta: 0.01

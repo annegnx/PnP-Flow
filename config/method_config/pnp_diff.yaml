@@ -1,0 +1,5 @@
+METHOD:
+    lmbda: 7.0
+    zeta: 0.3
+    sigma: 0.05
+    max_iter: 100

@@ -1,0 +1,5 @@
+DATASET:
+    dim_image: 256
+    num_channels: 3
+
+
