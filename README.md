@@ -4,9 +4,8 @@ This GitHub repository contains the code for PnP-Flow, a method combining PnP me
 
 <img src="demo/pnp_flow.png" scale=0.8/>
 
-<div style="text-align: center;">
-<img src="demo/algo.png" width="40%"/>
-</div>
+<img src="demo/algo.png" width="40%" style="display: block; margin: 0 auto;"/>
+
 ## 1. Getting started
 
 ### 1.1. Requirements
