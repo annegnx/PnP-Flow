@@ -1,2 +1,11 @@
-results/
+model/
 data/
+results/
+*.zip
+*.npy
+*.pth
+*.DS_Store
+demo/model_final_celeba.pt
+dirichlet/model_final_mnist_dirichlet.pt
+.ipynb_checkpoints
+demo/.ipynb_checkpoints
