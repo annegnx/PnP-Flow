@@ -2,9 +2,8 @@
 
 This GitHub repository contains the code for PnP-Flow, a method combining PnP methods with Flow Matching pretrained models for solving image restoration problems. **Try out the [demo](https://github.com/annegnx/PnP-Flow/blob/main/demo/demo.ipynb)!**
 
+<img src="demo/algo.png" width="50%" style="display: block; margin: 30 auto;"/>
 <img src="demo/pnp_flow.png" scale=0.8/>
-
-<img src="demo/algo.png" width="50%" style="display: block; margin: 10 auto;"/>
 
 ## 1. Getting started
 
