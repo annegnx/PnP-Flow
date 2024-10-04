@@ -1,6 +1,6 @@
 # PnP-Flow
 
-This GitHub repository contains the code for PnP-Flow, a method combining PnP methods with Flow Matching pretrained models for solving image restoration problems. **Try out the demo!**
+This GitHub repository contains the code for PnP-Flow, a method combining PnP methods with Flow Matching pretrained models for solving image restoration problems. **Try out the [demo](https://github.com/annegnx/PnP-Flow/blob/main/demo/demo.ipynb)!**
 
 <img src="demo/pnp_flow.png" scale=0.8/>
 
@@ -18,7 +18,7 @@ This GitHub repository contains the code for PnP-Flow, a method combining PnP me
 - torchdiffeq
 - deepinv
 
-### 1.2 Download datasets
+### 1.2. Download datasets
 To download the datasets, we follow the guidelines of https://github.com/clovaai/stargan-v2.
 The downloaded datasets should be placed in the folder data/ the following way:
 
@@ -30,6 +30,16 @@ The downloaded datasets should be placed in the folder data/ the following way:
     └── ...
 
 The dataset AFHQ-Cat doesn't have a validation split. To create the same split as we did for our experiments, run ```scripts/afhq_validation_images.bash```.
+
+### 1.3. Download pre-trained models
+We provide the following pre-trained OT Flow Matching models (U-Net):
+- [CelebA](https://drive.google.com/file/d/1ZZ6S-PGRx-tOPkr4Gt3A6RN-PChabnD6/view?usp=drive_link)
+- [AFHQ-Cat](https://drive.google.com/file/d/1FpD3cYpgtM8-KJ3Qk48fcjtr1Ne_IMOF/view?usp=drive_link)
+- [MNIST-Dirichlet](https://drive.google.com/file/d/1If5gkWEfChJHc8v8CCEhGhEeeAqsxKTz/view?usp=drive_link)
+
+And the denoisers for the PnP-GS method:
+- [CelebA](https://drive.google.com/file/d/1ZqBeafErEogaXFupW0ZSLL7P9QoRA-lN/view?usp=drive_link)
+- [AFHQ-Cat](https://drive.google.com/file/d/17AXI9p17c7h_xaI19qDcTT2u9_wu0DQY/view?usp=drive_link)
 
 ## 2. Training
 
@@ -43,7 +53,7 @@ python main.py --opts dataset celeba train True eval False batch_size 128 num_ep
 ```
 At each 5 epochs, the model is saved in ```./model/celeba/gaussian/ot```. Generated samples are saved in ```./results/celeba/gaussian/ot```.
 
-## 2.1 Computing generative model scores
+### Computing generative model scores
 
 After the training, the final model is loaded and can be used for generating samples / solving inverse problems. You can compute the full FID (based on 50000 generated samples), the Vendi score, and the Slice Wasserstein score running
 ```python
