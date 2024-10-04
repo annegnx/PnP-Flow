@@ -4,6 +4,8 @@ This GitHub repository contains the code for PnP-Flow, a method combining PnP me
 
 <img src="demo/pnp_flow.png" scale=0.8/>
 
+<img src="demo/algo.pdf" scale=0.8/>
+
 ## 1. Getting started
 
 ### 1.1. Requirements
