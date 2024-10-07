@@ -200,8 +200,6 @@ def sw_approx(X, Y):
                  m2_Yc ** (1 / 2)) ** 2) ** (1 / 2)
     return approx_sw
 
-# taken from caterini et al exposing flaws diffusion eval
-# https://github.com/layer6ai-labs/dgm-eval
 
 
 def define_model(args):
@@ -254,7 +252,7 @@ def load_model(name_model, model, state, checkpoint_path, device):
             model.load_state_dict(torch.load(checkpoint_path))
         model.to(device)
 
-
+# https://github.com/layer6ai-labs/dgm-eval
 def compute_vendi_score(X, q=1):
     X = X.reshape(X.shape[0], -1)
     X = X / (np.sqrt(np.sum(X**2, axis=1))[:, None])
@@ -263,6 +261,7 @@ def compute_vendi_score(X, q=1):
     w = scipy.linalg.eigvalsh(S / n)
     return np.exp(entropy_q(w, q=q))
 
+# taken from https://github.com/FabianAltekrueger/NeuralWassersteinGradientFlows/blob/main/schemes/ParticleFlow.py
 
 def differences_keops(p, q):
     '''
