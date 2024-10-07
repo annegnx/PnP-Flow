@@ -99,9 +99,10 @@ or the use the bash file ```scripts/script_val.sh```.
 
 Visual results will be saved in ```results/celeba/gaussian/inpainting```.
 
-## Aknowlegments
+## Acknowledgements
 This repository builds upon the following publicly available codes:
 - [PnP-GS](https://openreview.net/pdf?id=fPhKeld3Okz) available at https://github.com/samuro95/GSPnP
 - [DiffPIR](https://openaccess.thecvf.com/content/CVPR2023W/NTIRE/papers/Zhu_Denoising_Diffusion_Models_for_Plug-and-Play_Image_Restoration_CVPRW_2023_paper.pdf) from the [DeepInv](https://deepinv.github.io/deepinv/stubs/deepinv.sampling.DiffPIR.html#deepinv.sampling.DiffPIR) library
 - The folder ImageGeneration is copied from [Rectified Flow](https://github.com/gnobitab/RectifiedFlow) repository.
+- We thank Yasi Zhang for helping us to debug our Flow Priors code.
 
