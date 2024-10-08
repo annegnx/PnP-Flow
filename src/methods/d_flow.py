@@ -52,8 +52,8 @@ class D_FLOW(object):
         flow_class = cnf(self.model, self.args.model)
         z_t = odeint(flow_class, z,
                      torch.tensor([1.0, 0.0]).to(self.device),
-                     atol=1e-2,
-                     rtol=1e-2,
+                     atol=1e-5,
+                     rtol=1e-5,
                      method='dopri5',
                      )
         x = z_t[-1].detach()
