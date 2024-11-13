@@ -174,6 +174,8 @@ def main():
             degradation = GaussianDeblurring(
                 sigma_blur, kernel_size, "fft", args.num_channels, args.dim_image, device)
 
+        if args.noise_type == 'laplace':
+            sigma_noise = 0.3
         print('Solving the {} inverse problem with the method {}...'.format(
             args.problem, args.method))
         data_loaders = DataLoaders(

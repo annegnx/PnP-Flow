@@ -38,6 +38,8 @@ class PNP_FLOW(object):
     def grad_datafit(self, x, y, H, H_adj):
         if self.args.noise_type == 'gaussian':
             return H_adj(H(x) - y) / (self.args.sigma_noise**2)
+        elif self.args.noise_type == 'laplace':
+            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1)/self.args.sigma_noise
         else:
             raise ValueError('Noise type not supported')
 
@@ -70,7 +72,10 @@ class PNP_FLOW(object):
                 noisy_img = H(clean_img.clone().to(self.device))
                 torch.manual_seed(batch)
                 noisy_img += torch.randn_like(noisy_img) * sigma_noise
-
+            elif self.args.noise_type == 'laplace':
+                noise = torch.distributions.laplace.Laplace(torch.zeros(
+                    self.args.num_channels*self.args.dim_image**2), sigma_noise*torch.ones(self.args.num_channels*self.args.dim_image**2)).to(self.device)
+                noisy_img = H(clean_img.clone().to(self.device)) + noise
             else:
                 raise ValueError('Noise type not supported')
 
@@ -167,6 +172,10 @@ class PNP_FLOW(object):
         # Construct the save path for results
         folder = utils.get_save_path_ip(self.args.dict_cfg_method)
         self.args.save_path_ip = os.path.join(self.args.save_path, folder)
+
+        if self.args.noise_type == 'laplace':
+            self.args.save_path_ip = os.path.join(
+                'results_laplace', self.args.save_path_ip)
 
         # Create the directory if it doesn't exist
         os.makedirs(self.args.save_path_ip, exist_ok=True)
