@@ -178,6 +178,7 @@ class PNP_FLOW(object):
         self.args.save_path_ip = os.path.join(self.args.save_path, folder)
 
         if self.args.noise_type == 'laplace':
+            print('Laplace noise')
             self.args.save_path_ip = os.path.join(
                 'results_laplace', self.args.save_path_ip)
 
