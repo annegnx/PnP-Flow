@@ -116,13 +116,17 @@ def main():
             print('Computing metrics done!')
 
         if args.problem == "denoising":
-            sigma_noise = 0.2
-            args.noise_type = 'gaussian'
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.2
             degradation = Denoising()
 
         elif args.problem == "inpainting":
-            sigma_noise = 0.05
-            args.noise_type = 'gaussian'
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.05
             if args.dim_image == 128:
                 half_size_mask = 20
             elif args.dim_image == 256:
@@ -130,13 +134,17 @@ def main():
             degradation = BoxInpainting(half_size_mask)
 
         elif args.problem == "paintbrush_inpainting":
-            sigma_noise = 0.05
-            args.noise_type = 'gaussian'
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.05
             degradation = PaintbrushInpainting()
 
         elif args.problem == "random_inpainting":
-            sigma_noise = 0.01
-            args.noise_type = 'gaussian'
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.01
             p = 0.7
             degradation = RandomInpainting(p)
 
@@ -147,8 +155,10 @@ def main():
             elif args.dim_image == 256:
                 print('Superresolution with scale factor 4')
                 sf = 4
-            sigma_noise = 0.05
-            args.noise_type = 'gaussian'
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.05
             degradation = Superresolution(sf, args.dim_image)
 
         elif args.problem == "superresolution_bicubic":
@@ -158,24 +168,27 @@ def main():
             elif args.dim_image == 256:
                 print('Superresolution with scale factor 4')
                 sf = 4
-            sigma_noise = 0.05
-            args.noise_type = 'gaussian'
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.05
             degradation = Superresolution(
                 sf, args.dim_image, mode="bicubic", device=device)
 
         elif args.problem == "gaussian_deblurring_FFT":
-            sigma_noise = 0.05
             if args.dim_image == 128:
                 sigma_blur = 1.0
             elif args.dim_image == 256:
                 sigma_blur = 3.0
-            args.noise_type = 'gaussian'
+
+            if args.noise_type == 'laplace':
+                sigma_noise = 0.3
+            elif args.noise_type == 'gaussian':
+                sigma_noise = 0.05
             kernel_size = 61
             degradation = GaussianDeblurring(
                 sigma_blur, kernel_size, "fft", args.num_channels, args.dim_image, device)
 
-        if args.noise_type == 'laplace':
-            sigma_noise = 0.3
         print('Solving the {} inverse problem with the method {}...'.format(
             args.problem, args.method))
         data_loaders = DataLoaders(
