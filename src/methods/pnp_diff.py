@@ -59,9 +59,12 @@ class PNP_DIFF(object):
                                restored_img, self.args, H_adj, iter=100)
             utils.compute_ssim(clean_img, noisy_img,
                                restored_img, self.args, H_adj, iter=100)
+            utils.compute_lpips(clean_img, noisy_img,
+                                restored_img, self.args, H_adj, iter=100)
 
         utils.compute_average_psnr(self.args)
         utils.compute_average_ssim(self.args)
+        utils.compute_average_lpips(self.args)
 
     def run_method(self, data_loaders, degradation, sigma_noise, H_funcs=None):
 

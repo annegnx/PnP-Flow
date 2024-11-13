@@ -155,6 +155,8 @@ class OT_ODE(object):
                                        restored_img, self.args, H_adj, iter=iteration)
                     utils.compute_ssim(clean_img, noisy_img,
                                        restored_img, self.args, H_adj, iter=iteration)
+                    utils.compute_lpips(clean_img, noisy_img,
+                                        restored_img, self.args, H_adj, iter=iteration)
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
@@ -183,10 +185,13 @@ class OT_ODE(object):
                                    restored_img, self.args, H_adj, iter=iteration)
                 utils.compute_ssim(
                     clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                utils.compute_lpips(clean_img, noisy_img,
+                                    restored_img, self.args, H_adj, iter=iteration)
 
         if self.args.save_results:
             utils.compute_average_psnr(self.args)
             utils.compute_average_ssim(self.args)
+            utils.compute_average_lpips(self.args)
         if self.args.compute_memory:
             utils.compute_average_memory(self.args)
         if self.args.compute_time:

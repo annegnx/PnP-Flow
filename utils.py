@@ -40,10 +40,11 @@ from ImageGeneration.models import ddpm, ncsnv2, ncsnpp
 import ImageGeneration.sampling as sampling
 import ImageGeneration.sde_lib as sde_lib
 import warnings
+import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")
 
-
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+loss_fn_alex = lpips.LPIPS(net='alex').to(DEVICE)  # best forward scores
 
 
 class CfgNode(dict):
@@ -201,7 +202,6 @@ def sw_approx(X, Y):
     return approx_sw
 
 
-
 def define_model(args):
     if args.model == "ot" or args.model == "gradient_step":
         model = UNet(input_channels=args.num_channels,
@@ -253,6 +253,8 @@ def load_model(name_model, model, state, checkpoint_path, device):
         model.to(device)
 
 # https://github.com/layer6ai-labs/dgm-eval
+
+
 def compute_vendi_score(X, q=1):
     X = X.reshape(X.shape[0], -1)
     X = X / (np.sqrt(np.sum(X**2, axis=1))[:, None])
@@ -262,6 +264,7 @@ def compute_vendi_score(X, q=1):
     return np.exp(entropy_q(w, q=q))
 
 # taken from https://github.com/FabianAltekrueger/NeuralWassersteinGradientFlows/blob/main/schemes/ParticleFlow.py
+
 
 def differences_keops(p, q):
     '''
@@ -874,42 +877,97 @@ def compute_average_psnr(args):
         file.write('\n')
 
 
-def compute_average_time(args):
-    array_times = torch.zeros(args.max_batch)
-    filename = os.path.join(
-        args.save_path_ip, 'time_stats.txt')
-    for batch in range(args.max_batch):
-        with open(filename, 'r') as file:
-            for line in file:
-                # Convert the string representation of the dictionary to an actual dictionary
-                data = ast.literal_eval(line.strip())
-                # Check if the current batch number matches the one we're looking for
-                if data['batch'] == batch:
-                    array_times[batch] = data['time_per_batch']
-                    break
-    avg_filename = os.path.join(args.save_path_ip, f'time_average.txt')
+def compute_lpips(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
+    # Ensure images are in the appropriate range and format for LPIPS calculation
+    clean_img = postprocess(clean_img.clone(), args)
+    noisy_img = postprocess(noisy_img.clone(), args)
+    rec_img = postprocess(rec_img.clone(), args)
+    H_adj_noisy_img = postprocess(H_adj(torch.ones_like(noisy_img)), args)
 
-    with open(avg_filename, 'a') as f:
-        f.write(f'average time: {array_times.mean().item():.4f}\n')
+    # Permute images to NCHW format and move to the correct device
+    clean_img = clean_img.to(loss_fn_alex.device)
+    rec_img = rec_img.to(loss_fn_alex.device)
+
+    if args.problem in ['superresolution', 'superresolution_bicubic']:
+        noisy_img = H_adj_noisy_img.to(loss_fn_alex.device)
+    else:
+        noisy_img = noisy_img.to(loss_fn_alex.device)
+
+    # Ensure images are in the expected format (N, C, H, W) and range [-1, 1] for LPIPS
+    clean_img = 2 * clean_img - 1
+    rec_img = 2 * rec_img - 1
+    noisy_img = 2 * noisy_img - 1
+
+    # Compute LPIPS values
+    lpips_rec = loss_fn_alex(clean_img, rec_img).mean().item()
+    lpips_noisy = loss_fn_alex(clean_img, noisy_img).mean().item()
+
+    # Save LPIPS restored values
+    rec_filename = os.path.join(
+        args.save_path_ip, f'lpips_rec_batch{args.batch}.txt')
+
+    with open(rec_filename, 'a') as file:
+        file.write(f'{iter} {lpips_rec}\n')
+
+    # Save LPIPS noisy values
+    noisy_filename = os.path.join(
+        args.save_path_ip, f'lpips_noisy_batch{args.batch}.txt')
+
+    with open(noisy_filename, 'a') as file:
+        file.write(f'{iter} {lpips_noisy}\n')
 
 
-def compute_average_memory(args):
-    array_max_mem = torch.zeros(args.max_batch)
-    filename = os.path.join(
-        args.save_path_ip, 'memory_stats.txt')
-    for batch in range(args.max_batch):
-        with open(filename, 'r') as file:
-            for line in file:
-                # Convert the string representation of the dictionary to an actual dictionary
-                data = ast.literal_eval(line.strip())
-                # Check if the current batch number matches the one we're looking for
-                if data['batch'] == batch:
-                    array_max_mem[batch] = data['max_allocated']
-                    break
-    avg_filename = os.path.join(args.save_path_ip, f'max_memory_average.txt')
+def compute_average_lpips(args):
+    # Compute the average LPIPS values
+    dict_lpips = {}
+    for word in ['rec', 'noisy']:
+        lpips_by_iteration = defaultdict(list)
 
-    with open(avg_filename, 'a') as f:
-        f.write(f'average mem: {array_max_mem.mean().item():.4f}\n')
+        # Iterate over batches to collect LPIPS scores
+        for batch in range(args.max_batch):
+            filename = os.path.join(
+                args.save_path_ip, f'lpips_{word}_batch{batch}.txt')
+
+            with open(filename, 'r') as f:
+                for line in f:
+                    iteration, lpips = map(float, line.strip().split())
+                    lpips_by_iteration[int(iteration)].append(lpips)
+
+        # Calculate the average LPIPS score for each iteration
+        lpips_averages = {iteration: np.mean(
+            lpips_scores) for iteration, lpips_scores in lpips_by_iteration.items()}
+
+        # Save the average LPIPS values to a text file
+        avg_filename = os.path.join(
+            args.save_path_ip, f'lpips_{word}_average.txt'
+        )
+
+        with open(avg_filename, 'a') as f:
+            for iteration, avg_lpips in sorted(lpips_averages.items()):
+                f.write(f'{iteration} {avg_lpips:.4f}\n')
+
+        # Extract the last recorded LPIPS value for final comparison
+        with open(avg_filename, 'r') as file:
+            lines = file.readlines()
+            lpips_values = [float(line.split()[1]) for line in lines]
+            dict_lpips[word] = lpips_values[-1]
+
+    # Save final LPIPS values for the given configuration
+    with open(os.path.join(args.save_path, 'final_lpips.txt'), 'a') as file:
+        # Write header if the file is empty
+        if os.stat(os.path.join(args.save_path, 'final_lpips.txt')).st_size == 0:
+            file.write('lpips_rec ')
+            file.write('lpips_noisy ')
+            for key in args.dict_cfg_method.keys():
+                file.write(f'{key} ')
+            file.write('\n')
+
+        # Write the final average LPIPS scores and method configuration values
+        file.write(f"{dict_lpips['rec']} ")
+        file.write(f"{dict_lpips['noisy']} ")
+        for value in args.dict_cfg_method.values():
+            file.write(f'{value} ')
+        file.write('\n')
 
 
 def compute_ssim(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
@@ -996,6 +1054,44 @@ def compute_average_ssim(args):
         for value in args.dict_cfg_method.values():
             file.write(f'{value} ')
         file.write('\n')
+
+
+def compute_average_time(args):
+    array_times = torch.zeros(args.max_batch)
+    filename = os.path.join(
+        args.save_path_ip, 'time_stats.txt')
+    for batch in range(args.max_batch):
+        with open(filename, 'r') as file:
+            for line in file:
+                # Convert the string representation of the dictionary to an actual dictionary
+                data = ast.literal_eval(line.strip())
+                # Check if the current batch number matches the one we're looking for
+                if data['batch'] == batch:
+                    array_times[batch] = data['time_per_batch']
+                    break
+    avg_filename = os.path.join(args.save_path_ip, f'time_average.txt')
+
+    with open(avg_filename, 'a') as f:
+        f.write(f'average time: {array_times.mean().item():.4f}\n')
+
+
+def compute_average_memory(args):
+    array_max_mem = torch.zeros(args.max_batch)
+    filename = os.path.join(
+        args.save_path_ip, 'memory_stats.txt')
+    for batch in range(args.max_batch):
+        with open(filename, 'r') as file:
+            for line in file:
+                # Convert the string representation of the dictionary to an actual dictionary
+                data = ast.literal_eval(line.strip())
+                # Check if the current batch number matches the one we're looking for
+                if data['batch'] == batch:
+                    array_max_mem[batch] = data['max_allocated']
+                    break
+    avg_filename = os.path.join(args.save_path_ip, f'max_memory_average.txt')
+
+    with open(avg_filename, 'a') as f:
+        f.write(f'average mem: {array_max_mem.mean().item():.4f}\n')
 
 
 class MaskGenerator():

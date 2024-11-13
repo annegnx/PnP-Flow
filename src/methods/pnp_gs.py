@@ -229,6 +229,8 @@ class PROX_PNP(object):
                                            restored_img, self.args, H_adj, iter=iteration)
                         utils.compute_ssim(clean_img, noisy_img,
                                            restored_img, self.args, H_adj, iter=iteration)
+                        utils.compute_lpips(clean_img, noisy_img,
+                                            restored_img, self.args, H_adj, iter=iteration)
 
             restored_img = x.detach().clone()
             utils.save_images(clean_img, noisy_img, restored_img,
@@ -237,9 +239,12 @@ class PROX_PNP(object):
                                restored_img, self.args, H_adj, iter=iteration)
             utils.compute_ssim(clean_img, noisy_img,
                                restored_img, self.args, H_adj, iter=iteration)
+            utils.compute_lpips(clean_img, noisy_img,
+                                restored_img, self.args, H_adj, iter=iteration)
 
         utils.compute_average_psnr(self.args)
         utils.compute_average_ssim(self.args)
+        utils.compute_average_lpips(self.args)
 
     def should_save_image(self, iteration, steps):
         return iteration % (steps // 5) == 0

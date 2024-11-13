@@ -126,6 +126,8 @@ class D_FLOW(object):
                                    restored_img, self.args, H_adj, iter=iteration)
                 utils.compute_ssim(clean_img, noisy_img,
                                    restored_img, self.args, H_adj, iter=iteration)
+                utils.compute_lpips(clean_img, noisy_img,
+                                    restored_img, self.args, H_adj, iter=iteration)
 
                 if self.args.compute_time:
                     torch.cuda.synchronize()
@@ -138,6 +140,8 @@ class D_FLOW(object):
                                        restored_img, self.args, H_adj, iter=iteration)
                     utils.compute_ssim(clean_img, noisy_img,
                                        restored_img, self.args, H_adj, iter=iteration)
+                    utils.compute_lpips(clean_img, noisy_img,
+                                        restored_img, self.args, H_adj, iter=iteration)
 
                 del restored_img
 
@@ -170,6 +174,7 @@ class D_FLOW(object):
         if self.args.save_results:
             utils.compute_average_psnr(self.args)
             utils.compute_average_ssim(self.args)
+            utils.compute_average_lpips(self.args)
         if self.args.compute_memory:
             utils.compute_average_memory(self.args)
         if self.args.compute_time:
