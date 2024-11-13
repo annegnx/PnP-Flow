@@ -117,8 +117,8 @@ class PNP_FLOW(object):
                         if iteration % 50 == 0 or self.should_save_image(iteration, steps):
 
                             restored_img = x.detach().clone()
-                            utils.save_images(
-                                clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                            # utils.save_images(
+                            #     clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
                             utils.compute_psnr(clean_img, noisy_img,
                                                restored_img, self.args, H_adj, iter=iteration)
                             utils.compute_ssim(
