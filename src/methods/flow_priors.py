@@ -39,6 +39,9 @@ class FLOW_PRIORS(object):
             (clean_img, labels) = next(loader)
             self.args.batch = batch
 
+            if batch < 23:
+                continue
+
             noisy_img = H(clean_img.clone().to(self.device))
             torch.manual_seed(batch)
             noisy_img += torch.randn_like(noisy_img) * sigma_noise

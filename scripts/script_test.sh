@@ -39,18 +39,18 @@ batch_size_ip=4
 
 ### FLOW PRIORS
 method=flow_priors
-# problem=denoising
-# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=gaussian_deblurring_FFT
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 1000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=superresolution
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.1 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=inpainting
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-# problem=paintbrush_inpainting
+problem=denoising
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=gaussian_deblurring_FFT
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 1000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=superresolution
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.1 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=inpainting
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=random_inpainting
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# # problem=paintbrush_inpainting
+# # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=random_inpainting
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 
 
 
@@ -71,28 +71,28 @@ python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model}
 
 
 
-### PNP GRADIENT STEP
-method=pnp_gs
-model=gradient_step
-problem=denoising
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 1 sigma_factor 1.0
-problem=gaussian_deblurring_FFT
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 2.0 alpha 0.5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 35 sigma_factor 1.8
-problem=superresolution
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 2.0 alpha 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 20 sigma_factor 1.8
-problem=random_inpainting
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo hqs max_iter 20
+# ### PNP GRADIENT STEP
+# method=pnp_gs
+# model=gradient_step
+# problem=denoising
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 1 sigma_factor 1.0
+# problem=gaussian_deblurring_FFT
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 2.0 alpha 0.5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 35 sigma_factor 1.8
+# problem=superresolution
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 2.0 alpha 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 20 sigma_factor 1.8
+# problem=random_inpainting
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo hqs max_iter 20
 
 
-### PNP DIFFUSION
-method=pnp_diff
-model=diffusion
-problem=denoising
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=gaussian_deblurring_FFT
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1000.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=superresolution
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 100.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
-problem=random_inpainting
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# ### PNP DIFFUSION
+# method=pnp_diff
+# model=diffusion
+# problem=denoising
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=gaussian_deblurring_FFT
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1000.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=superresolution
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 100.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=random_inpainting
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 
