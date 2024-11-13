@@ -59,6 +59,7 @@ class PNP_FLOW(object):
         if self.args.noise_type == 'gaussian':
             self.args.lr_pnp = sigma_noise**2 * self.args.lr_pnp
             lr = self.args.lr_pnp
+
         elif self.args.noise_type == 'laplace':
             self.args.lr_pnp = sigma_noise * self.args.lr_pnp
             lr = self.args.lr_pnp
