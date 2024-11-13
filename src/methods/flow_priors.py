@@ -42,10 +42,22 @@ class FLOW_PRIORS(object):
             # if batch < 23:
             #     continue
 
-            noisy_img = H(clean_img.clone().to(self.device))
-            torch.manual_seed(batch)
-            noisy_img += torch.randn_like(noisy_img) * sigma_noise
-            noisy_img = noisy_img.to(self.device)
+            # noisy_img = H(clean_img.clone().to(self.device))
+            # torch.manual_seed(batch)
+            # noisy_img += torch.randn_like(noisy_img) * sigma_noise
+            # noisy_img = noisy_img.to(self.device)
+
+            if self.args.noise_type == 'gaussian':
+                noisy_img = H(clean_img.clone().to(self.device))
+                torch.manual_seed(batch)
+                noisy_img += torch.randn_like(noisy_img) * sigma_noise
+            elif self.args.noise_type == 'laplace':
+                noise = torch.distributions.laplace.Laplace(torch.zeros(
+                    self.args.num_channels*self.args.dim_image**2), sigma_noise*torch.ones(self.args.num_channels*self.args.dim_image**2)).sample([1]).view(self.args.num_channels, self.args.dim_image, self.args.dim_image).to(self.device)
+                noisy_img = H(clean_img.clone().to(self.device)) + noise
+            else:
+                raise ValueError('Noise type not supported')
+
             clean_img = clean_img.to('cpu')
 
             # intialize the image with the adjoint operator
@@ -91,8 +103,12 @@ class FLOW_PRIORS(object):
                         y_next = (t + dt) * noisy_img + (1-(t+dt)) * H(x_init)
                         trace_term = utils.hut_estimator(
                             1, self.model_forward, x,  num_t)
-                        loss = lmbda * torch.sum((H(x_next) - y_next) ** 2, dim=(
-                            1, 2, 3))
+                        if self.args.noise_type == 'gaussian':
+                            loss = lmbda * torch.sum((H(x_next) - y_next) ** 2, dim=(
+                                1, 2, 3))
+                        elif self.args.noise_type == 'laplace':
+                            loss = lmbda * torch.sum(torch.abs(H(x_next) - y_next), dim=(
+                                1, 2, 3))
                         loss += 0.5 * \
                             torch.sum(x ** 2, dim=(1, 2, 3)) + trace_term * dt
                         loss = loss.sum()
@@ -112,8 +128,12 @@ class FLOW_PRIORS(object):
 
                         trace_term = utils.hut_estimator(
                             1,  self.model_forward, x, num_t)
-                        loss = lmbda * torch.sum((H(x_next) - y_next) ** 2, dim=(
-                            1, 2, 3))
+                        if self.args.noise_type == 'gaussian':
+                            loss = lmbda * torch.sum((H(x_next) - y_next) ** 2, dim=(
+                                1, 2, 3))
+                        elif self.args.noise_type == 'laplace':
+                            loss = lmbda * torch.sum(torch.abs(H(x_next) - y_next), dim=(
+                                1, 2, 3))
                         loss += trace_term * dt
                         loss = loss.sum()
 
@@ -186,6 +206,10 @@ class FLOW_PRIORS(object):
         folder = utils.get_save_path_ip(self.args.dict_cfg_method)
         self.args.save_path_ip = os.path.join(self.args.save_path, folder)
 
+        if self.args.noise_type == 'laplace':
+            print('Laplace noise')
+            self.args.save_path_ip = os.path.join(
+                'results_laplace', self.args.save_path_ip)
         # Create the directory if it doesn't exist
         os.makedirs(self.args.save_path_ip, exist_ok=True)
 
