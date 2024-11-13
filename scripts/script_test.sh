@@ -39,8 +39,8 @@ batch_size_ip=4
 
 ### FLOW PRIORS
 method=flow_priors
-problem=denoising
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
+# problem=denoising
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 problem=gaussian_deblurring_FFT
 python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 1000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 problem=superresolution
