@@ -885,13 +885,13 @@ def compute_lpips(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
     H_adj_noisy_img = postprocess(H_adj(torch.ones_like(noisy_img)), args)
 
     # Permute images to NCHW format and move to the correct device
-    clean_img = clean_img.to(loss_fn_alex.device)
-    rec_img = rec_img.to(loss_fn_alex.device)
+    clean_img = clean_img.to(DEVICE)
+    rec_img = rec_img.to(DEVICE)
 
     if args.problem in ['superresolution', 'superresolution_bicubic']:
-        noisy_img = H_adj_noisy_img.to(loss_fn_alex.device)
+        noisy_img = H_adj_noisy_img.to(DEVICE)
     else:
-        noisy_img = noisy_img.to(loss_fn_alex.device)
+        noisy_img = noisy_img.to(DEVICE)
 
     # Ensure images are in the expected format (N, C, H, W) and range [-1, 1] for LPIPS
     clean_img = 2 * clean_img - 1
