@@ -10,3 +10,4 @@ dirichlet/model_final_mnist_dirichlet.pt
 .ipynb_checkpoints
 demo/.ipynb_checkpoints
 demo/demo_copy.ipynb
+demo/iter*.png
