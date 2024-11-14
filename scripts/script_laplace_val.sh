@@ -1,7 +1,7 @@
 dataset=celeba ## or celebahq or afhq_cat
 model=ot  ## rectified for celebahq, gradient_step for method=pnp_gs (Hurault) or diffusion for method=pnp_diff (Zhu), ot otherwise.
 eval_split=val
-max_batch=1
+max_batch=8
 batch_size_ip=4
 
 ### PNP FLOW
