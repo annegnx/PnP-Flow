@@ -92,7 +92,7 @@ python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model}
 # problem=gaussian_deblurring_FFT
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1000.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 problem=superresolution
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 100.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 5.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
 # problem=random_inpainting
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 
