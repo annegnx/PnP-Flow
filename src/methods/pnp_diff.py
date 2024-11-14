@@ -180,30 +180,6 @@ class ForwardOperator(DecomposablePhysics):
         return self.H_adj(y)
 
 
-class LaplaceNoise(NoiseModel):
-
-    def __init__(self, sigma=0.1, rng: torch.Generator = None):
-        super().__init__(rng=rng)
-        self.update_parameters(sigma=sigma)
-
-    def forward(self, x, sigma=None, seed=None, **kwargs):
-        r"""
-        Adds the noise to measurements x
-
-        :param torch.Tensor x: measurements
-        :param float, torch.Tensor sigma: standard deviation of the noise.
-            If not None, it will overwrite the current noise level.
-        :param int seed: the seed for the random number generator, if `rng` is provided.
-
-        :returns: noisy measurements
-        """
-        self.update_parameters(sigma=sigma)
-        sigma = self.sigma
-        noise = torch.distributions.laplace.Laplace(
-            torch.zeros_like(x), sigma * torch.ones_like(x)).sample().to(x.device)
-        return x + noise
-
-
 class NoiseModel(nn.Module):
     r"""
 
@@ -285,3 +261,27 @@ class NoiseModel(nn.Module):
         """
         self.rng_manual_seed(seed)
         return torch.empty_like(input).normal_(generator=self.rng)
+
+
+class LaplaceNoise(NoiseModel):
+
+    def __init__(self, sigma=0.1, rng: torch.Generator = None):
+        super().__init__(rng=rng)
+        self.update_parameters(sigma=sigma)
+
+    def forward(self, x, sigma=None, seed=None, **kwargs):
+        r"""
+        Adds the noise to measurements x
+
+        :param torch.Tensor x: measurements
+        :param float, torch.Tensor sigma: standard deviation of the noise.
+            If not None, it will overwrite the current noise level.
+        :param int seed: the seed for the random number generator, if `rng` is provided.
+
+        :returns: noisy measurements
+        """
+        self.update_parameters(sigma=sigma)
+        sigma = self.sigma
+        noise = torch.distributions.laplace.Laplace(
+            torch.zeros_like(x), sigma * torch.ones_like(x)).sample().to(x.device)
+        return x + noise
