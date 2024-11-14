@@ -7,7 +7,6 @@ import deepinv as dinv
 from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
-from deepinv.physics.noise import NoiseModel
 import torch.nn as nn
 
 
