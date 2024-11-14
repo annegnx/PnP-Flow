@@ -7,6 +7,7 @@ import deepinv as dinv
 from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
+from deepinv.physics.noise import NoiseModel
 
 
 class PNP_DIFF(object):
@@ -30,12 +31,20 @@ class PNP_DIFF(object):
             (clean_img, labels) = next(loader)
             self.args.batch = batch
 
-            physics = ForwardOperator(GaussianNoise(
-                sigma=sigma_noise), H, H_adj)
+            if self.args.noise_type == 'gaussian':
+                physics = ForwardOperator(
+                    GaussianNoise(sigma=sigma_noise), H, H_adj)
+            elif self.args.noise_type == 'laplace':
+                physics = ForwardOperator(
+                    LaplaceNoise(sigma=sigma_noise), H, H_adj)
+            else:
+                raise ValueError('Noise type not supported')
 
             noisy_img = ((physics(clean_img) + 1) / 2).to(self.device)
 
-            if self.args.problem == 'denoising':
+            if self.args.noise_type == 'laplace':
+                data_fidelity = dinv.optim.L1()
+            elif self.args.problem == 'denoising':
                 data_fidelity = dinv.optim.L2()
             elif self.args.problem == 'inpainting' or self.args.problem == 'random_inpainting' or self.args.problem == 'paintbrush_inpainting':
                 data_fidelity = DataFidelity_Inpainting(
@@ -71,6 +80,10 @@ class PNP_DIFF(object):
         # Construct the save path for results
         folder = utils.get_save_path_ip(self.args.dict_cfg_method)
         self.args.save_path_ip = os.path.join(self.args.save_path, folder)
+
+        if self.args.noise_type == 'laplace':
+            self.args.save_path_ip = os.path.join(
+                'results_laplace', self.args.save_path_ip)
 
         # Create the directory if it doesn't exist
         os.makedirs(self.args.save_path_ip, exist_ok=True)
@@ -165,3 +178,27 @@ class ForwardOperator(DecomposablePhysics):
 
     def A_adjoint(self, y, filter=None, **kwargs):
         return self.H_adj(y)
+
+
+class LaplaceNoise(NoiseModel):
+
+    def __init__(self, sigma=0.1, rng: torch.Generator = None):
+        super().__init__(rng=rng)
+        self.update_parameters(sigma=sigma)
+
+    def forward(self, x, sigma=None, seed=None, **kwargs):
+        r"""
+        Adds the noise to measurements x
+
+        :param torch.Tensor x: measurements
+        :param float, torch.Tensor sigma: standard deviation of the noise.
+            If not None, it will overwrite the current noise level.
+        :param int seed: the seed for the random number generator, if `rng` is provided.
+
+        :returns: noisy measurements
+        """
+        self.update_parameters(sigma=sigma)
+        sigma = self.sigma
+        noise = torch.distributions.laplace.Laplace(
+            torch.zeros_like(x), sigma * torch.ones_like(x)).sample().to(x.device)
+        return x + noise
