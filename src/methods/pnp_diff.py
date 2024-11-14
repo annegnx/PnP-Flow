@@ -8,6 +8,7 @@ from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
 from deepinv.physics.noise import NoiseModel
+import torch.nn as nn
 
 
 class PNP_DIFF(object):
@@ -202,3 +203,86 @@ class LaplaceNoise(NoiseModel):
         noise = torch.distributions.laplace.Laplace(
             torch.zeros_like(x), sigma * torch.ones_like(x)).sample().to(x.device)
         return x + noise
+
+
+class NoiseModel(nn.Module):
+    r"""
+
+    Base class for noise  model.
+    NoiseModel can be combined via :meth:`deepinv.physics.noise.NoiseModel.__mul__`,
+
+    :param torch.Generator (Optional) rng: a pseudorandom random number generator for the parameter generation. If is provided, it should be on the same device as the input.
+    """
+
+    def __init__(self, noise_model: Callable = None, rng: torch.Generator = None):
+        super().__init__()
+        if noise_model is None:
+            def noise_model(x): return x
+        self.noise_model = noise_model
+        self.rng = rng
+        if rng is not None:
+            self.initial_random_state = rng.get_state()
+
+    def forward(self, input: torch.Tensor, seed: int = None) -> torch.Tensor:
+        r"""
+        Add noise to the input
+        :param torch.Tensor input: input tensor
+        :param int seed: the seed for the random number generator.
+        """
+        self.rng_manual_seed(seed)
+        return self.noise_model(input)
+
+    def __mul__(self, other):
+        r"""
+        Concatenates two noise :math:`N = N_1 \circ N_2` via the mul operation
+
+        The resulting operator will add the noise from both noise models and keep the `rng` of :math:`N_1`.
+
+        :param deepinv.physics.noise.NoiseModel other: Physics operator :math:`A_2`
+        :return: (deepinv.physics.noise.NoiseModel) concatenated operator
+
+        """
+        def noise_model(x): return self.noise_model(other.noise_model(x))
+        return NoiseModel(
+            noise_model=noise_model,
+            rng=self.rng,
+        )
+
+    def rng_manual_seed(self, seed: int = None):
+        r"""
+        Sets the seed for the random number generator.
+
+        :param int seed: the seed to set for the random number generator. If not provided, the current state of the random number generator is used.
+            Note: it will be ignored if the random number generator is not initialized.
+        """
+        if seed is not None:
+            if self.rng is not None:
+                self.rng = self.rng.manual_seed(seed)
+            else:
+                warnings.warn(
+                    "Cannot set seed for random number generator because it is not initialized. The `seed` parameter is ignored."
+                )
+
+    def reset_rng(self):
+        r"""
+        Reset the random number generator to its initial state.
+        """
+        self.rng.set_state(self.initial_random_state)
+
+    def rand_like(self, input: torch.Tensor, seed: int = None):
+        r"""
+        Equivalent to `torch.rand_like` but supports a pseudorandom number generator argument.
+        :param int seed: the seed for the random number generator, if `rng` is provided.
+
+        """
+        self.rng_manual_seed(seed)
+        return torch.empty_like(input).uniform_(generator=self.rng)
+
+    def randn_like(self, input: torch.Tensor, seed: int = None):
+        r"""
+        Equivalent to `torch.randn_like` but supports a pseudorandom number generator argument.
+        :param int seed: the seed for the random number generator, if `rng` is provided.
+
+        """
+        self.rng_manual_seed(seed)
+        return torch.empty_like(input).normal_(generator=self.rng)
