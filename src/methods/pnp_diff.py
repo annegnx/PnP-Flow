@@ -286,3 +286,19 @@ class LaplaceNoise(NoiseModel):
         noise = torch.distributions.laplace.Laplace(
             torch.zeros_like(x), sigma * torch.ones_like(x)).sample().to(x.device)
         return x + noise
+
+    def update_parameters(self, sigma=None, **kwargs):
+        r"""
+        Updates the standard deviation of the noise.
+
+        :param float, torch.Tensor sigma: standard deviation of the noise.
+        """
+        if sigma is not None:
+            self.sigma = to_nn_parameter(sigma)
+
+
+def to_nn_parameter(x):
+    if isinstance(x, torch.Tensor):
+        return torch.nn.Parameter(x, requires_grad=False)
+    else:
+        return torch.nn.Parameter(torch.tensor(x), requires_grad=False)
