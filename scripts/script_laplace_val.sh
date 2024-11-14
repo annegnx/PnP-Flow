@@ -15,18 +15,18 @@ batch_size_ip=4
 # done
 
 
-# ### FLOW PRIORS
-method=flow_priors
-for lmbda in 100 1000 10000 100000
-do
-for eta in 0.001 0.01 0.1
-do
-for problem in superresolution
-do
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta ${eta} lmbda ${lmbda} max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
-done
-done
-done
+# # ### FLOW PRIORS
+# method=flow_priors
+# for lmbda in 100 1000 10000 100000
+# do
+# for eta in 0.001 0.01 0.1
+# do
+# for problem in superresolution
+# do
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta ${eta} lmbda ${lmbda} max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
+# done
+# done
+# done
 
 
 # ### PNP GRADIENT STEP
@@ -47,16 +47,16 @@ done
 # done
 
 
-# ### PNP DIFFUSION
-# method=pnp_diff
-# model=diffusion
-# for lmbda in 1.0 5.0 10.0 100.0 1000.0
-# do
-# for zeta in 0.1 0.3 0.5 1.0
-# do
-# for problem in superresolution
-# do
-# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda ${lmbda} zeta ${zeta} max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
-# done
-# done
-# done
+### PNP DIFFUSION
+method=pnp_diff
+model=diffusion
+for lmbda in 1.0 5.0 10.0 100.0 1000.0
+do
+for zeta in 0.1 0.3 0.5 1.0
+do
+for problem in superresolution
+do
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda ${lmbda} zeta ${zeta} max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
+done
+done
+done
