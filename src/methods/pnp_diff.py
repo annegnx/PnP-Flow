@@ -9,6 +9,7 @@ from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
 import torch.nn as nn
 from typing import Callable
+from deepinv.optim.distance import L1Distance
 
 
 class PNP_DIFF(object):
@@ -44,7 +45,7 @@ class PNP_DIFF(object):
             noisy_img = ((physics(clean_img) + 1) / 2).to(self.device)
 
             if self.args.noise_type == 'laplace':
-                data_fidelity = dinv.optim.L1()
+                data_fidelity = L1()
             elif self.args.problem == 'denoising':
                 data_fidelity = dinv.optim.L2()
             elif self.args.problem == 'inpainting' or self.args.problem == 'random_inpainting' or self.args.problem == 'paintbrush_inpainting':
@@ -302,3 +303,48 @@ def to_nn_parameter(x):
         return torch.nn.Parameter(x, requires_grad=False)
     else:
         return torch.nn.Parameter(torch.tensor(x), requires_grad=False)
+
+
+class L1(DataFidelity):
+    r"""
+    :math:`\ell_1` data fidelity term.
+
+    In this case, the data fidelity term is defined as
+
+    .. math::
+
+        f(x) = \|Ax-y\|_1.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.d = L1Distance()
+
+    def prox(
+        self,
+        x,
+        y,
+        physics,
+        *args,
+        gamma=1.0,
+        stepsize=None,
+        crit_conv=1e-5,
+        max_iter=100,
+        **kwargs,
+    ):
+
+        norm_AtA = physics.compute_norm(x)
+        stepsize = 1.0 / norm_AtA if stepsize is None else stepsize
+        u = y.clone()
+        for it in range(max_iter):
+            u_prev = u.clone()
+
+            t = x - physics.A_adjoint(u)
+            u_ = u + stepsize * physics.A(t)
+            u = u_ - stepsize * self.d.prox(u_ / stepsize, y, gamma / stepsize)
+            rel_crit = ((u - u_prev).norm()) / (u.norm() + 1e-12)
+            print(rel_crit)
+            if rel_crit < crit_conv and it > 2:
+                break
+        return t
