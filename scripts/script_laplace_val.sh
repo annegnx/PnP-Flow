@@ -6,7 +6,7 @@ batch_size_ip=4
 
 ### PNP FLOW
 method=pnp_flow
-for alpha in 1.2 1.5 1.7 1.9 2.2 #0.01 0.1 0.3 0.5 0.8 1.0 
+for alpha in 0.01 0.1 0.3 0.5 0.8 1.0  #1.2 1.5 1.7 1.9 2.2 #
 do
 for problem in superresolution
 do
