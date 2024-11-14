@@ -105,8 +105,8 @@ class PROX_PNP(object):
                 torch.manual_seed(batch)
                 noisy_img += torch.randn_like(noisy_img) * sigma_noise
             elif self.args.noise_type == 'laplace':
-                noise = torch.distributions.laplace.Laplace(torch.zeros(
-                    self.args.num_channels*self.args.dim_image**2), sigma_noise*torch.ones(self.args.num_channels*self.args.dim_image**2)).sample([1]).view(self.args.num_channels, self.args.dim_image, self.args.dim_image).to(self.device)
+                noise = torch.distributions.laplace.Laplace(
+                    torch.zeros_like(noisy_img), sigma_noise * torch.ones_like(noisy_img)).sample().to(x.device)
                 noisy_img += noise
             else:
                 raise ValueError('Noise type not supported')
