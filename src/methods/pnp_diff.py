@@ -8,6 +8,7 @@ from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
 import torch.nn as nn
+from typing import Callable
 
 
 class PNP_DIFF(object):
