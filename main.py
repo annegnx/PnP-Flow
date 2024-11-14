@@ -193,8 +193,12 @@ def main():
             args.problem, args.method))
         data_loaders = DataLoaders(
             args.dataset, args.batch_size_ip, args.batch_size_ip).load_data()
-        args.save_path = os.path.join(
-            args.root, 'results', args.dataset, args.model, args.problem, args.method, args.eval_split)
+        if args.noise_type == 'laplace':
+            args.save_path = os.path.join(
+                args.root, 'results_laplace', args.dataset, args.model, args.problem, args.method, args.eval_split)
+        elif args.noise_type == 'gaussian':
+            args.save_path = os.path.join(
+                args.root, 'results', args.dataset, args.model, args.problem, args.method, args.eval_split)
 
         if args.method == 'pnp_flow':
             method = PNP_FLOW(model, device, args)
