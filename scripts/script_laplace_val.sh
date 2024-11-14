@@ -4,29 +4,29 @@ eval_split=val
 max_batch=8
 batch_size_ip=4
 
-### PNP FLOW
-method=pnp_flow
-for alpha in 0.01 0.1 0.3 0.5 0.8 1.0  #1.2 1.5 1.7 1.9 2.2 #
-do
-for problem in superresolution
-do
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha ${alpha} num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
-done
-done
-
-
-# ### FLOW PRIORS
-# method=flow_priors
-# for lmbda in 100 1000 10000 100000
-# do
-# for eta in 0.001 0.01 0.1
+# ### PNP FLOW
+# method=pnp_flow
+# for alpha in 0.01 0.1 0.3 0.5 0.8 1.0  #1.2 1.5 1.7 1.9 2.2 #
 # do
 # for problem in superresolution
 # do
-# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta ${eta} lmbda ${lmbda} max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha ${alpha} num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
 # done
 # done
-# done
+
+
+# ### FLOW PRIORS
+method=flow_priors
+for lmbda in 100 1000 10000 100000
+do
+for eta in 0.001 0.01 0.1
+do
+for problem in superresolution
+do
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta ${eta} lmbda ${lmbda} max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
+done
+done
+done
 
 
 # ### PNP GRADIENT STEP
