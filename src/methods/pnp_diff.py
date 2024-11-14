@@ -3,13 +3,21 @@ import torch
 import utils as utils
 import os
 import torch.nn.functional as F
+from deepinv.optim.distance import (
+    Distance,
+    L2Distance,
+    L1Distance,
+    IndicatorL2Distance,
+    AmplitudeLossDistance,
+    PoissonLikelihoodDistance,
+    LogPoissonLikelihoodDistance,
+)
 import deepinv as dinv
 from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
 import torch.nn as nn
 from typing import Callable
-from deepinv.optim.distance import L1Distance
 
 
 class PNP_DIFF(object):
