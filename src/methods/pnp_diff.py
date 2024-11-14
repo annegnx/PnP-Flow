@@ -3,15 +3,7 @@ import torch
 import utils as utils
 import os
 import torch.nn.functional as F
-from deepinv.optim.distance import (
-    Distance,
-    L2Distance,
-    L1Distance,
-    IndicatorL2Distance,
-    AmplitudeLossDistance,
-    PoissonLikelihoodDistance,
-    LogPoissonLikelihoodDistance,
-)
+
 import deepinv as dinv
 from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
@@ -327,7 +319,19 @@ class L1(DataFidelity):
 
     def __init__(self):
         super().__init__()
-        self.d = L1Distance()
+
+    def prox_l1(self, x, ths=0.1):
+        r"""
+        Soft thresholding of the wavelet coefficients.
+
+        :param torch.Tensor x: wavelet coefficients.
+        :param float, torch.Tensor ths: threshold.
+        """
+        return torch.maximum(
+            torch.tensor([0], device=x.device).type(x.dtype), x - abs(ths)
+        ) + torch.minimum(
+            torch.tensor([0], device=x.device).type(x.dtype), x + abs(ths)
+        )
 
     def prox(
         self,
@@ -350,9 +354,9 @@ class L1(DataFidelity):
 
             t = x - physics.A_adjoint(u)
             u_ = u + stepsize * physics.A(t)
-            u = u_ - stepsize * self.d.prox(u_ / stepsize, y, gamma / stepsize)
+            u = u_ - stepsize * \
+                self.prox_l1(u_ / stepsize, y, gamma / stepsize)
             rel_crit = ((u - u_prev).norm()) / (u.norm() + 1e-12)
-            print(rel_crit)
             if rel_crit < crit_conv and it > 2:
                 break
         return t
