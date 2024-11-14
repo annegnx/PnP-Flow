@@ -67,7 +67,7 @@ for sigma_factor in 1. 1.2 1.5 1.8 2. 3. 4. 5. 6. 8. 10.
 do
 for problem in gaussian_deblurring_FFT superresolution
 do
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp ${lr_pnp} alpha ${alpha} max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 100
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp ${lr_pnp} alpha ${alpha} max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 100 sigma_factor ${sigma_factor}
 done
 done
 done

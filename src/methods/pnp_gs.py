@@ -24,6 +24,8 @@ class PROX_PNP(object):
     def grad_datafit(self, x, y, H, H_adj):
         if self.args.noise_type == 'gaussian':
             return H_adj(H(x) - y) / (self.args.sigma_noise**2)
+        elif self.args.noise_type == 'laplace':
+            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1)/self.args.sigma_noise
         else:
             raise ValueError('Noise type not supported')
 
@@ -77,6 +79,9 @@ class PROX_PNP(object):
         if self.args.noise_type == 'gaussian':
             datafit = 0.5 * torch.linalg.norm(H(x)-y)**2
             return datafit + lmbda * g
+        elif self.args.noise_type == 'laplace':
+            datafit = torch.mean(torch.abs(H(x)-y))
+            return datafit + lmbda * g
 
     def solve_ip(self, test_loader, degradation, sigma_noise):
         H = degradation.H
@@ -95,18 +100,14 @@ class PROX_PNP(object):
             (clean_img, labels) = next(loader)
             self.args.batch = batch
 
+            noisy_img = H(clean_img.clone().to(self.device))
             if self.args.noise_type == 'gaussian':
-                if self.args.problem == "superresolution_bicubic":
-                    if clean_img.shape[-1] == 128:
-                        sf = 2
-                    else:
-                        sf = 4
-                    print(sf)
-                    noisy_img = clean_img[..., 0::sf, 0::sf]
-                else:
-                    noisy_img = H(clean_img.clone().to(self.device))
                 torch.manual_seed(batch)
                 noisy_img += torch.randn_like(noisy_img) * sigma_noise
+            elif self.args.noise_type == 'laplace':
+                noise = torch.distributions.laplace.Laplace(torch.zeros(
+                    self.args.num_channels*self.args.dim_image**2), sigma_noise*torch.ones(self.args.num_channels*self.args.dim_image**2)).sample([1]).view(self.args.num_channels, self.args.dim_image, self.args.dim_image).to(self.device)
+                noisy_img += noise
             else:
                 raise ValueError('Noise type not supported')
 
@@ -200,7 +201,7 @@ class PROX_PNP(object):
 
                     elif self.args.algo == "pgd":
                         # Proximal Gradient Descent
-                        if self.args.problem != "denoising":
+                        if self.args.problem != "denoising" or self.args.noise_type == "laplace":
                             # Gradient step
                             gradx = self.grad_datafit(
                                 x_old, noisy_img, H, H_adj)
