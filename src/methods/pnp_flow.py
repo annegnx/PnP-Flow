@@ -177,10 +177,6 @@ class PNP_FLOW(object):
         folder = utils.get_save_path_ip(self.args.dict_cfg_method)
         self.args.save_path_ip = os.path.join(self.args.save_path, folder)
 
-        if self.args.noise_type == 'laplace':
-            self.args.save_path_ip = os.path.join(
-                'results_laplace', self.args.save_path_ip)
-
         # Create the directory if it doesn't exist
         os.makedirs(self.args.save_path_ip, exist_ok=True)
 
