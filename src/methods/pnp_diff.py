@@ -355,7 +355,7 @@ class L1(DataFidelity):
             t = x - physics.A_adjoint(u)
             u_ = u + stepsize * physics.A(t)
             u = u_ - stepsize * \
-                self.prox_l1(u_ / stepsize, y, gamma / stepsize)
+                (self.prox_l1(u_ / stepsize - y, gamma / stepsize) + y)
             rel_crit = ((u - u_prev).norm()) / (u.norm() + 1e-12)
             if rel_crit < crit_conv and it > 2:
                 break
