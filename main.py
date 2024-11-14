@@ -199,6 +199,10 @@ def main():
         elif args.noise_type == 'gaussian':
             args.save_path = os.path.join(
                 args.root, 'results', args.dataset, args.model, args.problem, args.method, args.eval_split)
+        try:
+            os.makedirs(args.save_path)
+        except FileExistsError:
+            pass
 
         if args.method == 'pnp_flow':
             method = PNP_FLOW(model, device, args)
