@@ -156,24 +156,10 @@ def main():
                 print('Superresolution with scale factor 4')
                 sf = 4
             if args.noise_type == 'laplace':
-                sigma_noise = 0.3
+                sigma_noise = 0.1
             elif args.noise_type == 'gaussian':
                 sigma_noise = 0.05
             degradation = Superresolution(sf, args.dim_image)
-
-        elif args.problem == "superresolution_bicubic":
-            if args.dim_image == 128:
-                print('Superresolution with scale factor 2')
-                sf = 2
-            elif args.dim_image == 256:
-                print('Superresolution with scale factor 4')
-                sf = 4
-            if args.noise_type == 'laplace':
-                sigma_noise = 0.3
-            elif args.noise_type == 'gaussian':
-                sigma_noise = 0.05
-            degradation = Superresolution(
-                sf, args.dim_image, mode="bicubic", device=device)
 
         elif args.problem == "gaussian_deblurring_FFT":
             if args.dim_image == 128:
