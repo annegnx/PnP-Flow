@@ -5,7 +5,7 @@ max_batch=25
 batch_size_ip=4
 
 ### PNP FLOW
-# method=pnp_flow
+method=pnp_flow
 # problem=denoising
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.7 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
 # problem=gaussian_deblurring_FFT
@@ -41,7 +41,7 @@ python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model}
 method=flow_priors
 # problem=denoising
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
-problem=gaussian_deblurring_FFT
+problem=superresolution
 python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
 # problem=superresolution
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.1 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
@@ -72,7 +72,7 @@ python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model}
 
 
 # ### PNP GRADIENT STEP
-# method=pnp_gs
+method=pnp_gs
 # model=gradient_step
 # problem=denoising
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 1 sigma_factor 1.0
@@ -85,7 +85,7 @@ python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model}
 
 
 # ### PNP DIFFUSION
-# method=pnp_diff
+method=pnp_diff
 # model=diffusion
 # problem=denoising
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
