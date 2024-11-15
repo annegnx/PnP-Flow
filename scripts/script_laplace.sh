@@ -73,7 +73,7 @@ batch_size_ip=4
 
 # ### PNP GRADIENT STEP
 method=pnp_gs
-# model=gradient_step
+model=gradient_step
 # problem=denoising
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip} algo pgd max_iter 1 sigma_factor 1.0
 # problem=gaussian_deblurring_FFT
@@ -86,7 +86,7 @@ python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model}
 
 # ### PNP DIFFUSION
 method=pnp_diff
-# model=diffusion
+model=diffusion
 # problem=denoising
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lmbda 1.0 zeta 1.0 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 # problem=gaussian_deblurring_FFT
