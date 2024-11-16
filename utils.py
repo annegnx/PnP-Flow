@@ -811,7 +811,8 @@ def compute_psnr(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
 
     # Compute PSNR values
     psnr_rec = PSNR(clean_img, rec_img, data_range=1.0)
-    psnr_noisy = PSNR(clean_img, noisy_img, data_range=1.0)
+    # psnr_noisy = PSNR(clean_img, noisy_img, data_range=1.0)
+    psnr_noisy = PSNR(clean_img, noisy_img)
 
     # Save PSNR restored values
     rec_filename = os.path.join(
