@@ -800,7 +800,7 @@ def compute_psnr(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
     clean_img = postprocess(clean_img.clone(), args)
     noisy_img = postprocess(noisy_img.clone(), args)
     rec_img = postprocess(rec_img.clone(), args)
-    H_adj_noisy_img = postprocess(H_adj(torch.ones_like(noisy_img)), args)
+    H_adj_noisy_img = postprocess(H_adj(noisy_img), args)
 
     clean_img = clean_img.permute(0, 2, 3, 1).cpu().data.numpy()
     if args.problem == 'superresolution' or args.problem == 'superresolution_bicubic':
@@ -811,8 +811,7 @@ def compute_psnr(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
 
     # Compute PSNR values
     psnr_rec = PSNR(clean_img, rec_img, data_range=1.0)
-    # psnr_noisy = PSNR(clean_img, noisy_img, data_range=1.0)
-    psnr_noisy = PSNR(clean_img, noisy_img)
+    psnr_noisy = PSNR(clean_img, noisy_img, data_range=1.0)
 
     # Save PSNR restored values
     rec_filename = os.path.join(
