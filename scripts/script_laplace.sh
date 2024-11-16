@@ -1,17 +1,17 @@
 dataset=celeba ## or celebahq or afhq_cat
 model=ot  ## rectified for celebahq, gradient_step for method=pnp_gs (Hurault) or diffusion for method=pnp_diff (Zhu), ot otherwise.
 eval_split=test
-max_batch=25
+max_batch=1
 batch_size_ip=4
 
 ### PNP FLOW
-# method=pnp_flow
+method=pnp_flow
 # problem=denoising
 # # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.7 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
 # # problem=gaussian_deblurring_FFT
 # # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.7 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
-# problem=superresolution
-# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
+problem=superresolution
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
 # problem=inpainting
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 0.5 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100
 # problem=paintbrush_inpainting
@@ -22,11 +22,11 @@ batch_size_ip=4
 
 
 ### FLOW PRIORS
-method=flow_priors
+# method=flow_priors
 # # problem=denoising
 # # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 100 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
-problem=superresolution
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 1000 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
+# problem=superresolution
+# python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.01 lmbda 1000 max_batch ${max_batch} batch_size_ip ${batch_size_ip} noise_type laplace
 # problem=superresolution
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} eta 0.1 lmbda 10000 max_batch ${max_batch} batch_size_ip ${batch_size_ip}
 # problem=inpainting
