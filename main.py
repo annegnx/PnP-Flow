@@ -157,6 +157,7 @@ def main():
                 sf = 4
             if args.noise_type == 'laplace':
                 sigma_noise = 0.1
+
             elif args.noise_type == 'gaussian':
                 sigma_noise = 0.05
             degradation = Superresolution(sf, args.dim_image)
