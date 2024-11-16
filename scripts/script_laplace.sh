@@ -10,7 +10,7 @@ method=pnp_flow
 # # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.7 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
 # # problem=gaussian_deblurring_FFT
 # # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.7 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
-problem=superresolution
+problem=denoising #superresolution
 python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 1.0 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100 noise_type laplace
 # problem=inpainting
 # python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} lr_pnp 1.0 alpha 0.5 num_samples 5 max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp 100
