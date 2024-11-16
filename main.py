@@ -177,6 +177,7 @@ def main():
 
         print('Solving the {} inverse problem with the method {}...'.format(
             args.problem, args.method))
+        print('sigma_noise', sigma_noise)
         data_loaders = DataLoaders(
             args.dataset, args.batch_size_ip, args.batch_size_ip).load_data()
         if args.noise_type == 'laplace':
