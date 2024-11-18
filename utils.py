@@ -44,7 +44,8 @@ import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-loss_fn_alex = lpips.LPIPS(net='alex').to(DEVICE)  # best forward scores
+loss_fn_alex = lpips.LPIPS(net='alex', normalize=True).to(
+    DEVICE)  # best forward scores
 
 
 class CfgNode(dict):
