@@ -44,7 +44,7 @@ import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-loss_fn_alex = lpips.LPIPS(net='alex', normalize=True).to(
+loss_fn_alex = lpips.LPIPS(net='alex').to(
     DEVICE)  # best forward scores
 
 
@@ -900,8 +900,9 @@ def compute_lpips(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
     noisy_img = 2 * noisy_img - 1
 
     # Compute LPIPS values
-    lpips_rec = loss_fn_alex(clean_img, rec_img).mean().item()
-    lpips_noisy = loss_fn_alex(clean_img, noisy_img).mean().item()
+    lpips_rec = loss_fn_alex(clean_img, rec_img, normalize=True).mean().item()
+    lpips_noisy = loss_fn_alex(
+        clean_img, noisy_img, normalize=True).mean().item()
 
     # Save LPIPS restored values
     rec_filename = os.path.join(
