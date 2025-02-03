@@ -14,9 +14,9 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Training Rectified Flow on AFHQ-CAT."""
+"""Training rectified Flow on CelebA HQ."""
 
-from ImageGeneration.configs.default_lsun_configs import get_default_configs
+from pnpflow.image_generation.configs.default_lsun_configs import get_default_configs
 
 
 def get_config():
@@ -38,7 +38,7 @@ def get_config():
 
     # data
     data = config.data
-    data.dataset = 'AFHQ-CAT-Pytorch'
+    data.dataset = 'CelebA-HQ-Pytorch'
     data.centered = True
 
     # model

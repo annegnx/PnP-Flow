@@ -17,7 +17,7 @@
 """
 
 import torch
-import ImageGeneration.sde_lib as sde_lib
+import pnpflow.image_generation.sde_lib as sde_lib
 import numpy as np
 
 

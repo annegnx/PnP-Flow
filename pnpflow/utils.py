@@ -28,17 +28,17 @@ import cv2
 import os
 import deepinv as dinv
 from random import randint, seed
-from src.models import UNet
-import ImageGeneration.losses as losses
-import ImageGeneration.models.utils as mutils
-import ImageGeneration.datasets as datasets
-import ImageGeneration.models.ema as mema
-from ImageGeneration.utils import restore_checkpoint
-from ImageGeneration.configs.rectified_flow.celeba_hq_pytorch_rf_gaussian import get_config as get_config_celebahq
-from ImageGeneration.configs.rectified_flow.afhq_cat_pytorch_rf_gaussian import get_config as get_config_afhq_cat
-from ImageGeneration.models import ddpm, ncsnv2, ncsnpp
-import ImageGeneration.sampling as sampling
-import ImageGeneration.sde_lib as sde_lib
+from pnpflow.models import UNet
+import pnpflow.image_generation.losses as losses
+import pnpflow.image_generation.models.utils as mutils
+import pnpflow.image_generation.datasets as datasets
+import pnpflow.image_generation.models.ema as mema
+from pnpflow.image_generation.utils import restore_checkpoint
+from pnpflow.image_generation.configs.rectified_flow.celeba_hq_pytorch_rf_gaussian import get_config as get_config_celebahq
+from pnpflow.image_generation.configs.rectified_flow.afhq_cat_pytorch_rf_gaussian import get_config as get_config_afhq_cat
+from pnpflow.image_generation.models import ddpm, ncsnv2, ncsnpp
+import pnpflow.image_generation.sampling as sampling
+import pnpflow.image_generation.sde_lib as sde_lib
 import warnings
 import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")

@@ -22,10 +22,10 @@ import torch
 import numpy as np
 import abc
 
-from ImageGeneration.models.utils import from_flattened_numpy, to_flattened_numpy, get_score_fn
+from pnpflow.image_generation.models.utils import from_flattened_numpy, to_flattened_numpy, get_score_fn
 from scipy import integrate
-import ImageGeneration.sde_lib as sde_lib
-import ImageGeneration.models.utils as mutils
+import pnpflow.image_generation.sde_lib as sde_lib
+import pnpflow.image_generation.models.utils as mutils
 
 import matplotlib.pyplot as plt
 

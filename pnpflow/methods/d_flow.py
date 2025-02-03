@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import os
 from tqdm import tqdm
 from torchdiffeq import odeint_adjoint as odeint
-import ImageGeneration.models.utils as mutils
+import pnpflow.image_generation.models.utils as mutils
 from time import perf_counter
 
 

@@ -2,7 +2,7 @@ import torch
 import utils as utils
 from matplotlib import pyplot as plt
 import os
-import ImageGeneration.models.utils as mutils
+import pnpflow.image_generation.models.utils as mutils
 from time import perf_counter
 
 

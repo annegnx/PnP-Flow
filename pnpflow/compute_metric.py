@@ -2,9 +2,9 @@ import torch
 import numpy as np
 from torchmetrics.image import PeakSignalNoiseRatio
 
-from src.dataloaders import DataLoaders
-from src.models import InceptionV3
-import src.fid_score as fs
+from pnpflow.dataloaders import DataLoaders
+from pnpflow.models import InceptionV3
+import pnpflow.fid_score as fs
 import utils
 
 

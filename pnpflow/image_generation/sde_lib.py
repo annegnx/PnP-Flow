@@ -1,7 +1,7 @@
 """Abstract SDE classes, Reverse SDE, and VE/VP SDEs."""
 import torch
 import numpy as np
-import ImageGeneration.models.utils as mutils
+import pnpflow.image_generation.models.utils as mutils
 
 
 class RectifiedFlow():

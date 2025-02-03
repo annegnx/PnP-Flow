@@ -19,8 +19,8 @@
 import torch
 import torch.optim as optim
 import numpy as np
-import ImageGeneration.models.utils as mutils
-from ImageGeneration.sde_lib import RectifiedFlow
+import pnpflow.image_generation.models.utils as mutils
+from pnpflow.image_generation.sde_lib import RectifiedFlow
 
 
 def get_optimizer(config, params):
