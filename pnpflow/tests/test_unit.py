@@ -44,7 +44,6 @@ def test_degradation(device):
 @pytest.mark.parametrize("device", device)
 def test_inference_model(device):
     test_sample = torch.ones((1, 3, 128, 128), device=device)
-
     model = load_model(device)
     model.eval()
     forward = model(test_sample, torch.ones(
