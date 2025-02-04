@@ -11,3 +11,10 @@ dirichlet/model_final_mnist_dirichlet.pt
 demo/.ipynb_checkpoints
 demo/demo_copy.ipynb
 demo/iter*.png
+
+*.pyc
+*/__pycache__/*
+/pnpflow.egg-info/*
+*.pt
+
+build/
