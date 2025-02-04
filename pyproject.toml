@@ -23,16 +23,11 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-
-
 [tool.setuptools.dynamic]
 version = {attr = "pnpflow.__version__"}
 
-
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
-include = ["pnpflow"]
-
 
 [project.optional-dependencies]
 rectified = [
