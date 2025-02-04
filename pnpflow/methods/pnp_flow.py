@@ -71,6 +71,7 @@ class PNP_FLOW(object):
 
             (clean_img, labels) = next(loader)
             self.args.batch = batch
+            print(clean_img.shape)
 
             if self.args.noise_type == 'gaussian':
                 noisy_img = H(clean_img.clone().to(self.device))

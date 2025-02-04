@@ -17,7 +17,6 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import numpy as np
-import utils as utils
 from matplotlib import pyplot as plt
 import ot
 from torchdiffeq import odeint_adjoint as odeint
