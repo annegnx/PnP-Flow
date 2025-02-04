@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from scipy import linalg
 from torch.nn.functional import adaptive_avg_pool2d
-from src.models import InceptionV3
+from pnpflow.models import InceptionV3
 
 
 def get_activations(images, model, batch_size=50, dims=2048, device='cpu'):

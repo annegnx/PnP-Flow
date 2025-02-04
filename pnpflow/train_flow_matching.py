@@ -11,6 +11,7 @@
 # (https://github.com/JChemseddine/Conditional_Wasserstein_Distances/blob/main/utils/utils_FID.py)
 
 import torch
+import os
 import skimage.io as io
 import numpy as np
 import torch
@@ -18,12 +19,11 @@ from tqdm import tqdm
 import numpy as np
 import utils as utils
 from matplotlib import pyplot as plt
-import os
 import ot
-from src.models import InceptionV3
-import src.fid_score as fs
 from torchdiffeq import odeint_adjoint as odeint
-from src.dataloaders import DataLoaders
+from pnpflow.models import InceptionV3
+import pnpflow.fid_score as fs
+from pnpflow.dataloaders import DataLoaders
 
 
 class FLOW_MATCHING(object):

@@ -4,17 +4,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pnpflow"
-description = "TODO"
+description = "Pytorch library for solving inverse problems with generative models (benchmark flow matching, diffusion)"
 authors = [
     {name="Anne Gagneux", email="anne.gagneux@ens-lyon.fr"},
+    {name="Ségolène Martin"},
+    {name="Paul Hagemann"},
     ]
 license = {text = "BSD (3-Clause)"}
 dependencies = [
     "torch",
     "scikit-image",
     "pytorch-ignite",
-    "cv2",
+    "opencv-python",
     "torchvision",
+    "torchdiffeq",
+    "torchmetrics",
+    "POT",
 ]
 dynamic = ["version"]
 
@@ -26,7 +31,7 @@ version = {attr = "pnpflow.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
-include = ["pnpflow"] 
+include = ["pnpflow"]
 
 
 [project.optional-dependencies]

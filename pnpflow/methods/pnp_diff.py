@@ -3,13 +3,13 @@ import torch
 import utils as utils
 import os
 import torch.nn.functional as F
+import torch.nn as nn
+from typing import Callable
 
 import deepinv as dinv
 from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity
 from deepinv.physics.forward import DecomposablePhysics
-import torch.nn as nn
-from typing import Callable
 
 
 class PNP_DIFF(object):

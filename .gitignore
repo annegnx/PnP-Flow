@@ -16,3 +16,5 @@ demo/iter*.png
 */__pycache__/*
 /pnpflow.egg-info/*
 *.pt
+
+build/

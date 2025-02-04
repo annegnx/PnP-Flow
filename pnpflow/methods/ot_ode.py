@@ -2,8 +2,8 @@ import torch
 import utils as utils
 from matplotlib import pyplot as plt
 import os
-import pnpflow.image_generation.models.utils as mutils
 from time import perf_counter
+import pnpflow.image_generation.models.utils as mutils
 
 
 class OT_ODE(object):
