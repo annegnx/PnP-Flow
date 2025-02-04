@@ -6,7 +6,12 @@ This GitHub repository contains the code for our PnP-Flow [paper](https://arxiv.
 <img src="demo/pnp_flow.png" scale=0.8/>
 
 ## 1. Getting started
+To get started, clone the repository and install ```pnpflow``` via pip
 
+```
+cd PnP-Flow
+pip install -e .
+```
 ### 1.1. Requirements
 
 - torch 1.13.1 (or later)
