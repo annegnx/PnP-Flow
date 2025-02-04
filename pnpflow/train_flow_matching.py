@@ -81,7 +81,8 @@ class FLOW_MATCHING(object):
                         f'Epoch: {ep}, iter: {iteration}, Loss: {loss.item()}\n')
 
             # save samples, plot them, and compute FID on small dataset
-            self.sample_plot(x, ep)
+                if iteration % 100 == 0:
+                    self.sample_plot(x, ep)
             if ep % 5 == 0:
                 # save model
                 torch.save(self.model.state_dict(),
@@ -119,15 +120,15 @@ class FLOW_MATCHING(object):
             pass
 
         reco = utils.postprocess(self.apply_flow_matching(16), self.args)
-        utils.save_image(reco, x[:16], self.save_path + 'results_samplings/' +
-                         'samplings_ep_{}'.format(ep), self.args)
+        utils.save_samples(reco.detach().cpu(), x[:16].cpu(), self.save_path + 'results_samplings/' +
+                           'samplings_ep_{}.pdf'.format(ep), self.args)
 
         # check the plots by saving training samples
         if ep == 0:
             gt = x[:16]
             gt = utils.postprocess(gt, self.args)
-            utils.save_image(gt, gt, self.save_path + 'results_samplings/' +
-                             'train_samples_ep_{}'.format(ep), self.args)
+            utils.save_samples(gt.detach().cpu(), gt.detach().cpu(), self.save_path + 'results_samplings/' +
+                               'train_samples_ep_{}.pdf'.format(ep), self.args)
 
     def compute_fast_fid(self, num_samples):
         block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[2048]
