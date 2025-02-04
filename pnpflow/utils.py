@@ -623,6 +623,40 @@ def bicubic_filter(factor=2):
     return torch.Tensor(w).unsqueeze(0).unsqueeze(0)
 
 
+def save_samples(samples, train_samples, path, args):
+
+    samples = samples.clone().permute(0, 2, 3, 1).cpu().data.numpy()
+    train_samples = train_samples.clone().permute(0, 2, 3, 1).cpu().data.numpy()
+    batch_samples_size = samples.shape[0]
+    cols = int(math.sqrt(batch_samples_size))  # Number of columns
+    rows = int(batch_samples_size / cols)   # Number of rows
+    fig, ax = plt.subplots(rows, 2 * cols, figsize=(20, 20))
+    for i in range(rows):
+        for j in range(cols):
+            if args.num_channels == 1:
+                ax[i, j].imshow(samples[i + j * rows].squeeze(-1),
+                                cmap='gray', vmin=0, vmax=1)
+            else:
+                ax[i, j].imshow(samples[i + j * rows])
+    for i in range(rows):
+        for j in range(cols, 2*cols+1):
+            if i+(j - cols)*rows < train_samples.shape[0]:
+                if args.num_channels == 1:
+                    ax[i, j].imshow(train_samples[i+(j - cols)*rows].squeeze(-1),
+                                    cmap='gray', vmin=0, vmax=1)
+                else:
+                    ax[i, j].imshow(train_samples[i+(j - cols)*rows])
+    ax[0, 0].set_title("Model samples")
+    ax[0, cols].set_title("Training samples")
+
+    for ax_ in ax.flatten():
+        ax_.set_xticks([])
+        ax_.set_yticks([])
+
+    plt.savefig(path),
+    plt.close(fig)
+
+
 def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
 
     clean_img = postprocess(clean_img.clone(), args)
