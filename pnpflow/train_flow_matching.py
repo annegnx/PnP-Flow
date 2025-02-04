@@ -81,8 +81,7 @@ class FLOW_MATCHING(object):
                         f'Epoch: {ep}, iter: {iteration}, Loss: {loss.item()}\n')
 
             # save samples, plot them, and compute FID on small dataset
-                if iteration % 100 == 0:
-                    self.sample_plot(x, ep)
+            self.sample_plot(x, ep)
             if ep % 5 == 0:
                 # save model
                 torch.save(self.model.state_dict(),
