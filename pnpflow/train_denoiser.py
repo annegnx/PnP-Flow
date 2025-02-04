@@ -6,7 +6,6 @@ import torch
 from torch import nn
 from tqdm import tqdm
 import numpy as np
-import utils as utils
 from matplotlib import pyplot as plt
 import os
 from torch.optim import Adam

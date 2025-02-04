@@ -1,10 +1,10 @@
 import torch
 import torch
 import numpy as np
-import utils as utils
 import os
 from time import perf_counter
 import pnpflow.image_generation.models.utils as mutils
+import pnpflow.utils as utils
 
 
 class PNP_FLOW(object):

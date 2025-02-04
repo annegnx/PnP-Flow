@@ -24,6 +24,7 @@ from torchdiffeq import odeint_adjoint as odeint
 from pnpflow.models import InceptionV3
 import pnpflow.fid_score as fs
 from pnpflow.dataloaders import DataLoaders
+import pnpflow.utils as utils
 
 
 class FLOW_MATCHING(object):

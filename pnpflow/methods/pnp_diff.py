@@ -1,11 +1,10 @@
 import torch
 import torch
-import utils as utils
 import os
 import torch.nn.functional as F
 import torch.nn as nn
 from typing import Callable
-
+import pnpflow.utils as utils
 import deepinv as dinv
 from deepinv.physics import GaussianNoise
 from deepinv.optim.data_fidelity import DataFidelity

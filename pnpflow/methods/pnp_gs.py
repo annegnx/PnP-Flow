@@ -2,10 +2,10 @@ import torch
 import numpy as np
 import torch
 import numpy as np
-import utils as utils
 from matplotlib import pyplot as plt
 import os
-from degradations import Superresolution
+from pnpflow.degradations import Superresolution
+import pnpflow.utils as utils
 
 
 class PROX_PNP(object):
