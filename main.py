@@ -90,7 +90,7 @@ def main():
             model_path = args.root + \
                 'model/{}/{}/{}/model_final.pt'.format(
                     args.dataset, args.latent, args.model)
-            load_model(args.model, model, state, download=False,
+            load_model(args.model, model, state, download=args.use_pretrained,
                        checkpoint_path=model_path, dataset=None,  device=device)
             model.eval()
 

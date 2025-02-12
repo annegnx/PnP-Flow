@@ -22,4 +22,5 @@ EVAL:
     compute_memory: False
     compute_time: False
     save_results: True
+    use_pretrained: True            # use pretrained models if True
 
