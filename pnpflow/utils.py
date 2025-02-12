@@ -213,6 +213,7 @@ def load_model(name_model, model, state, download=False, checkpoint_path=None, d
 
     if name_model == "ot":
         if download:
+            assert dataset is not None
             import gdown
             dict_ids = {"celeba": "1ZZ6S-PGRx-tOPkr4Gt3A6RN-PChabnD6",
                         "afhq_cat": "1FpD3cYpgtM8-KJ3Qk48fcjtr1Ne_IMOF"}
