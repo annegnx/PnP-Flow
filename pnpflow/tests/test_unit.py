@@ -10,7 +10,7 @@ import pnpflow.degradations
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def load_model(device):
+def load_model(device=torch.device("cpu")):
     output_path = "../model/celeba/gaussian/ot/"
     folder = Path(output_path)
     folder.mkdir(parents=True, exist_ok=True)
@@ -31,8 +31,8 @@ def load_model(device):
     return model.to(device)
 
 
-@pytest.mark.parametrize("device", device)
-def test_degradation(device):
+# @pytest.mark.parametrize("device", device)
+def test_degradation(device=torch.device("cpu")):
     test_sample = torch.ones((1, 3, 128, 128), device=device)
     p = 32
     degradation = pnpflow.degradations.BoxInpainting(p)
@@ -41,8 +41,8 @@ def test_degradation(device):
         y[:, :, 32:64, 32:64], torch.zeros((1, 3, 32, 32), device=device))
 
 
-@pytest.mark.parametrize("device", device)
-def test_inference_model(device):
+# @pytest.mark.parametrize("device", device)
+def test_inference_model(device=torch.device("cpu")):
     test_sample = torch.ones((1, 3, 128, 128), device=device)
     model = load_model(device)
     model.eval()
