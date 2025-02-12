@@ -26,8 +26,9 @@ def load_model(device=torch.device("cpu")):
                                 attn_resolutions=(16, 8),
                                 resamp_with_conv=True,
                                 )
-    model.load_state_dict(torch.load(
-        output_path + "model_final.pt"))
+    checkpoint = torch.load(output_path + "model_final.pt",
+                            map_location=device)
+    model.load_state_dict(checkpoint)
     return model.to(device)
 
 
