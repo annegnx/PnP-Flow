@@ -90,13 +90,15 @@ def main():
             model_path = args.root + \
                 'model/{}/{}/{}/model_final.pt'.format(
                     args.dataset, args.latent, args.model)
-            load_model(args.model, model, state, model_path, device)
+            load_model(args.model, model, state, download=False,
+                       checkpoint_path=model_path, dataset=None,  device=device)
             model.eval()
 
         elif args.model == "rectified":
             model_path = args.root + 'model/{}/{}/{}/model_final.pth'.format(
                 args.dataset, args.latent, args.model)
-            load_model(args.model, model, state, model_path, device)
+            load_model(args.model, model, state, download=False,
+                       checkpoint_path=model_path, dataset=None, device=device)
             model.eval()
 
         elif args.model == "diffusion":
