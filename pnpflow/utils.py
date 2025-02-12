@@ -1,8 +1,8 @@
 from functools import partial
 import torch
-from numpy import linalg
 import numpy as np
 from typing import List
+from pathlib import Path
 import os
 import yaml
 import ast
@@ -29,7 +29,6 @@ import os
 import deepinv as dinv
 from random import randint, seed
 from pnpflow.models import UNet
-
 import warnings
 import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")
@@ -210,9 +209,22 @@ def define_model(args):
         raise Exception("Unknown model!")
 
 
-def load_model(name_model, model, state, checkpoint_path, device):
+def load_model(name_model, model, state, download=False, checkpoint_path=None, dataset=None, device='cuda'):
 
     if name_model == "ot":
+        if download:
+            import gdown
+            dict_ids = {"celeba": "1ZZ6S-PGRx-tOPkr4Gt3A6RN-PChabnD6",
+                        "afhq_cat": "1FpD3cYpgtM8-KJ3Qk48fcjtr1Ne_IMOF"}
+
+            output_path = f"../model/{dataset}/gaussian/ot/"
+            folder = Path(output_path)
+            folder.mkdir(parents=True, exist_ok=True)
+            drive_id = dict_ids[dataset]
+            url = f"https://drive.google.com/uc?id={drive_id}"
+            gdown.download(url, output_path + "model_final.pt", quiet=False)
+            checkpoint_path = output_path + "model_final.pt"
+
         model.load_state_dict(torch.load(checkpoint_path))
         model.to(device)
 
