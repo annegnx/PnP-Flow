@@ -14,6 +14,7 @@ license = {text = "BSD (3-Clause)"}
 dependencies = [
     "deepinv",
     "gdown",
+    "kaggle",
     "lpips",
     "ml_collections",
     "ninja",
@@ -26,6 +27,7 @@ dependencies = [
     "pandas",
     "POT",
     "scikit-image",
+    "wget",
 ]
 dynamic = ["version"]
 

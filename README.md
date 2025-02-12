@@ -24,21 +24,25 @@ pip install -e .
 - torchdiffeq
 - deepinv
 
-### 1.2. Download datasets
-To download the datasets, we follow the guidelines of https://github.com/clovaai/stargan-v2.
-The downloaded datasets should be placed in the folder data/ the following way:
+### 1.2. Download datasets and pretrained models
 
-    .
-    ├── ...
-    ├── data
-    │   ├── mnist
-    │   ├── celeba
-    └── ...
+We provide a script to download datasets used in PnP-Flow and the corresponding pre-trained networks. The datasets and network checkpoints will be downloaded and stored in the `data` and `model` directories, respectively.
 
-The dataset AFHQ-Cat doesn't have a validation split. To create the same split as we did for our experiments, run ```scripts/afhq_validation_images.bash```.
+<b>CelebA.</b> To download the [CelebA](https://www.kaggle.com/datasets/jessicali9530/celeba-dataset) dataset and the pre-trained OT FM network (U-Net), run the following commands:
+```bash
+bash download.sh celeba-dataset
+bash download.sh pretrained-network-celeba
+```
 
-### 1.3. Download pre-trained models
-We provide the following pre-trained OT Flow Matching models (U-Net):
+<b>AFHQ-CAT.</b> To download the [AFHQ-CAT](https://github.com/clovaai/stargan-v2/blob/master/README.md#animal-faces-hq-dataset-afhq) dataset and the pre-trained OT FM network (U-Net), run the following commands:
+```bash
+bash download.sh afhq-cat-dataset
+bash download.sh pretrained-network-afhq-cat
+```
+
+Note that as the dataset AFHQ-Cat doesn't have a validation split, we create one when downloading the dataset. 
+
+Alternatively, the FM models can directly be downloaded at:
 - [CelebA](https://drive.google.com/file/d/1ZZ6S-PGRx-tOPkr4Gt3A6RN-PChabnD6/view?usp=drive_link)
 - [AFHQ-Cat](https://drive.google.com/file/d/1FpD3cYpgtM8-KJ3Qk48fcjtr1Ne_IMOF/view?usp=drive_link)
 - [MNIST-Dirichlet](https://drive.google.com/file/d/1If5gkWEfChJHc8v8CCEhGhEeeAqsxKTz/view?usp=drive_link)
