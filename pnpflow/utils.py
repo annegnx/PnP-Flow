@@ -29,13 +29,7 @@ import os
 import deepinv as dinv
 from random import randint, seed
 from pnpflow.models import UNet
-import pnpflow.image_generation.losses as losses
-import pnpflow.image_generation.models.utils as mutils
-import pnpflow.image_generation.datasets as datasets
-import pnpflow.image_generation.models.ema as mema
-from pnpflow.image_generation.utils import restore_checkpoint
-from pnpflow.image_generation.configs.rectified_flow.celeba_hq_pytorch_rf_gaussian import get_config as get_config_celebahq
-from pnpflow.image_generation.configs.rectified_flow.afhq_cat_pytorch_rf_gaussian import get_config as get_config_afhq_cat
+
 import warnings
 import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")
@@ -195,6 +189,12 @@ def define_model(args):
         return (model, None)
 
     elif args.model == "rectified":
+        import pnpflow.image_generation.losses as losses
+        import pnpflow.image_generation.models.utils as mutils
+        import pnpflow.image_generation.models.ema as mema
+        from pnpflow.image_generation.configs.rectified_flow.celeba_hq_pytorch_rf_gaussian import get_config as get_config_celebahq
+        from pnpflow.image_generation.configs.rectified_flow.afhq_cat_pytorch_rf_gaussian import get_config as get_config_afhq_cat
+
         if args.dataset == "celebahq":
             config = get_config_celebahq()
         elif args.dataset == "afhq_cat":
@@ -217,6 +217,8 @@ def load_model(name_model, model, state, checkpoint_path, device):
         model.to(device)
 
     elif name_model == "rectified":
+        from pnpflow.image_generation.utils import restore_checkpoint
+
         ckpt_path = checkpoint_path  # 'model/celebahq/gaussian/model_final.pth'
         state = restore_checkpoint(ckpt_path, state, device=device)
 
@@ -534,6 +536,9 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
 
 def preprocess(img, args):
     if args.model == "rectified":
+        import pnpflow.image_generation.datasets as datasets
+        from pnpflow.image_generation.configs.rectified_flow.celeba_hq_pytorch_rf_gaussian import get_config as get_config_celebahq
+        from pnpflow.image_generation.configs.rectified_flow.afhq_cat_pytorch_rf_gaussian import get_config as get_config_afhq_cat
         if args.dataset == "celebahq":
             config = get_config_celebahq()
         elif args.dataset == "afhq_cat":
@@ -545,6 +550,8 @@ def preprocess(img, args):
 
 def postprocess(img, args):
     if args.model == "rectified":
+        from pnpflow.image_generation.configs.rectified_flow.celeba_hq_pytorch_rf_gaussian import get_config as get_config_celebahq
+        from pnpflow.image_generation.configs.rectified_flow.afhq_cat_pytorch_rf_gaussian import get_config as get_config_afhq_cat
         if args.dataset == "celebahq":
             config = get_config_celebahq()
         elif args.dataset == "afhq_cat":
