@@ -1,9 +1,7 @@
 import torch
 import numpy as np
-from torchmetrics.image import PeakSignalNoiseRatio
 from pnpflow.models import InceptionV3
 import pnpflow.fid_score as fs
-import pnpflow.utils as utils
 
 
 class ComputeMetric:
