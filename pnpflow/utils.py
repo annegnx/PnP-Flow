@@ -226,7 +226,7 @@ def load_model(name_model, model, state, download=False, checkpoint_path=None, d
             gdown.download(url, output_path + "model_final.pt", quiet=False)
             checkpoint_path = output_path + "model_final.pt"
 
-        model.load_state_dict(torch.load(checkpoint_path))
+        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
         model.to(device)
 
     elif name_model == "rectified":
