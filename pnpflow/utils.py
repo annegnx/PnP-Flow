@@ -259,118 +259,6 @@ def hut_estimator(NO_test, v, inp, t):
     return prod
 
 
-def cconj(t, inplace=False):
-    '''complex's conjugation
-
-    Args:
-        t: NxCxHxWx2
-
-    Returns:
-        output: NxCxHxWx2
-    '''
-    c = t.clone() if not inplace else t
-    c[..., 1] *= -1
-    return c
-
-
-def rfft(t):
-    # Real-to-complex Disrcete Fourier Transform
-    return torch.rfft(t, 2, onesided=False)
-
-
-def irfft(t):
-    # Complex-to-real Inverse Disrcete Fourier Transform
-    return torch.irfft(t, 2, onesided=False)
-
-
-def fft(t):
-    # Complex-to-complex Disrcete Fourier Transform
-    return torch.fft(t, 2)
-
-
-def ifft(t):
-    # Complex-to-complex Inverse Disrcete Fourier Transform
-    return torch.ifft(t, 2)
-
-
-def upsample(x, sf=4):
-    '''s-fold upsampler
-
-    Upsampling the spatial size by filling the new entries with zeros
-
-    x: tensor image, NxCxWxH
-    '''
-    st = 0
-    z = torch.zeros(
-        (x.shape[0],
-         x.shape[1],
-         x.shape[2] *
-         sf,
-         x.shape[3] *
-         sf)).type_as(x)
-    z[..., st::sf, st::sf].copy_(x)
-    return z
-
-
-def upsample_bicubic(x, sf=4):
-    '''s-fold upsampler
-
-    Upsampling the spatial size by filling the new entries with zeros
-
-    x: tensor image, NxCxWxH
-    '''
-    st = 0
-    z = torch.zeros(
-        (x.shape[0],
-         x.shape[1],
-         x.shape[2] *
-         sf,
-         x.shape[3] *
-         sf)).type_as(x)
-    z[..., st::sf, st::sf].copy_(x)
-    z = F.interpolate(z, scale_factor=sf, mode='bicubic')
-    return z
-
-
-def downsample(x, sf=4):
-    '''s-fold downsampler
-
-    Keeping the upper-left pixel for each distinct sfxsf patch and discarding the others
-
-    x: tensor image, NxCxWxH
-    '''
-    st = 0
-    return x[..., st::sf, st::sf]
-
-
-def downsample_bicubic(x, sf=4):
-    '''s-fold downsampler
-
-    Keeping the upper-left pixel for each distinct sfxsf patch and discarding the others
-
-    x: tensor image, NxCxWxH
-    '''
-    st = 0
-    x = F.interpolate(x, scale_factor=1/sf, mode='bicubic')
-    return x[..., st::sf, st::sf]
-
-
-def cmul(t1, t2):
-    '''complex multiplication
-
-    Args:
-        t1: NxCxHxWx2, complex tensor
-        t2: NxCxHxWx2
-
-    Returns:
-        output: NxCxHxWx2
-    '''
-    real1, imag1 = t1[..., 0], t1[..., 1]
-    real2, imag2 = t2[..., 0], t2[..., 1]
-    return torch.stack([real1 * real2 - imag1 * imag2,
-                       real1 * imag2 + imag1 * real2], dim=-1)
-
-
 def gaussian_2d_kernel(sigma, size):
     """Generate a 2D Gaussian kernel."""
     x = torch.arange(-size // 2 + 1., size // 2 + 1.)
@@ -423,17 +311,6 @@ def gaussian_blur(x, sigma_blur, size_kernel):
     kernel = kernel.repeat(x.shape[1], 1, 1, 1)
     # kernel = kernel.flip(-1).flip(-2)
     return F.conv2d(x, kernel, stride=1, padding='same', groups=x.shape[1])
-
-
-def half_mask(x):
-    """
-    Mask on x corresponding to replacing with zeros the up half of the image
-    """
-    d = x.shape[2] // 2
-
-    mask = torch.ones_like(x)
-    mask[:, :, :d, :] = 0
-    return mask * x
 
 
 def square_mask(x, half_size_mask):
@@ -696,19 +573,6 @@ def save_time_use(dict_mem,  args):
         args.save_path_ip, f'time_stats.txt')
     with open(time_filename, "a") as f:
         f.write(str(dict_mem) + '\n')
-
-
-def args_to_dict(args):
-    # If args is an argparse.Namespace, convert it to a dictionary
-    if isinstance(args, argparse.Namespace):
-        return vars(args)
-    return args
-
-
-def write_args_to_txt(args_dict, file_path, output_file_name="config_options.txt"):
-    with open(os.path.join(file_path, output_file_name), 'w') as f:
-        for key, value in args_dict.items():
-            f.write(f"{key}: {value}\n")
 
 
 def compute_psnr(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
