@@ -34,10 +34,6 @@ import warnings
 import lpips
 warnings.filterwarnings("ignore", module="matplotlib\..*")
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-loss_fn_alex = lpips.LPIPS(net='alex').to(
-    DEVICE)  # best forward scores
-
 
 class CfgNode(dict):
     """
@@ -666,6 +662,15 @@ def compute_average_psnr(args):
 
 
 def compute_lpips(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
+
+    # Download the LPIPS model if it is not already available
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # Path where LPIPS usually stores models (default cache directory)
+    lpips_model_path = os.path.expanduser('~/.cache/torch/hub/checkpoints/')
+    if not os.path.exists(lpips_model_path) or not any(fname.startswith('alex') for fname in os.listdir(lpips_model_path)):
+        print("Downloading LPIPS model for the first time...")
+    loss_fn_alex = lpips.LPIPS(net='alex').to(DEVICE)
+
     # Ensure images are in the appropriate range and format for LPIPS calculation
     clean_img = postprocess(clean_img.clone(), args)
     noisy_img = postprocess(noisy_img.clone(), args)
