@@ -1,4 +1,7 @@
 # PnP-Flow
+![build](https://github.com/annegnx/PnP-Flow/actions/workflows/main.yml/badge.svg)
+![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)
+
 
 This GitHub repository contains the code for our ICLR 2025 PnP-Flow [paper](https://arxiv.org/pdf/2410.02423), a method combining PnP methods with Flow Matching pretrained models for solving image restoration problems. **Try out the [demo](https://github.com/annegnx/PnP-Flow/blob/main/demo/demo.ipynb)!**
 
