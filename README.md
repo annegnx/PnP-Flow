@@ -45,9 +45,9 @@ bash download.sh pretrained-network-afhq-cat
 
 Note that as the dataset AFHQ-Cat doesn't have a validation split, we create one when downloading the dataset. 
 
-Alternatively, the FM models can directly be downloaded here: [CelebA](https://drive.google.com/file/d/1ZZ6S-PGRx-tOPkr4Gt3A6RN-PChabnD6/view?usp=drive_link), [AFHQ-Cat](https://drive.google.com/file/d/1FpD3cYpgtM8-KJ3Qk48fcjtr1Ne_IMOF/view?usp=drive_link), [MNIST-Dirichlet](https://drive.google.com/file/d/1If5gkWEfChJHc8v8CCEhGhEeeAqsxKTz/view?usp=drive_link)
+Alternatively, the FM models can directly be downloaded here: [CelebA model](https://drive.google.com/file/d/1ZZ6S-PGRx-tOPkr4Gt3A6RN-PChabnD6/view?usp=drive_link), [AFHQ-Cat model](https://drive.google.com/file/d/1FpD3cYpgtM8-KJ3Qk48fcjtr1Ne_IMOF/view?usp=drive_link), [MNIST-Dirichlet model](https://drive.google.com/file/d/1If5gkWEfChJHc8v8CCEhGhEeeAqsxKTz/view?usp=drive_link)
 
-And the denoisers for the PnP-GS method here: [CelebA](https://drive.google.com/file/d/1ZqBeafErEogaXFupW0ZSLL7P9QoRA-lN/view?usp=drive_link), [AFHQ-Cat](https://drive.google.com/file/d/17AXI9p17c7h_xaI19qDcTT2u9_wu0DQY/view?usp=drive_link)
+And the denoisers for the PnP-GS method here: [CelebA model](https://drive.google.com/file/d/1ZqBeafErEogaXFupW0ZSLL7P9QoRA-lN/view?usp=drive_link), [AFHQ-Cat model](https://drive.google.com/file/d/17AXI9p17c7h_xaI19qDcTT2u9_wu0DQY/view?usp=drive_link)
 
 ## 2. Training
 
