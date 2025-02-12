@@ -13,6 +13,8 @@ authors = [
 license = {text = "BSD (3-Clause)"}
 dependencies = [
     "deepinv",
+    "gdown",
+    "ml_collections",
     "ninja",
     "opencv-python",
     "pytorch-ignite",
