@@ -23,6 +23,7 @@ dependencies = [
     "torchvision",
     "torchdiffeq",
     "torchmetrics",
+    "pandas",
     "POT",
     "scikit-image",
 ]
