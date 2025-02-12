@@ -15,8 +15,6 @@
 
 # pylint: skip-file
 """Return training and evaluation/test datasets from config files."""
-import jax
-import os
 
 
 def get_data_scaler(config):

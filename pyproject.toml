@@ -12,14 +12,16 @@ authors = [
     ]
 license = {text = "BSD (3-Clause)"}
 dependencies = [
-    "torch",
-    "scikit-image",
-    "pytorch-ignite",
+    "deepinv",
+    "ninja",
     "opencv-python",
+    "pytorch-ignite",
+    "torch",
     "torchvision",
     "torchdiffeq",
     "torchmetrics",
     "POT",
+    "scikit-image",
 ]
 dynamic = ["version"]
 
