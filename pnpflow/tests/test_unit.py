@@ -21,7 +21,7 @@ def test_degradation(device=torch.device("cpu")):
 
 
 # @pytest.mark.parametrize("device", device)
-def test_inference_model(device=torch.device("cpu")):
+def test_inference_ot_fm(device=torch.device("cpu")):
     test_sample = torch.ones((1, 3, 128, 128), device=device)
     model = pnpflow.models.UNet(input_channels=3,
                                 input_height=128,
