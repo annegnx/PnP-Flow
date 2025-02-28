@@ -47,7 +47,7 @@ elif  [ $FILE == "celeba-dataset" ]; then
     else
         echo "Error: ZIP file not found after download!"
         exit 1
-    mv ./data/celeba-dataset ./data/celeba
+    mv ./data/img_align_celebe ./data/celeba
     fi
 else
     echo "Available arguments are pretrained-network-celeba, pretrained-network-afhq-cat, celeba-dataset, celeba-hq-dataset, and afhq-cat-dataset."
