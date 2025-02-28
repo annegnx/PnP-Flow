@@ -33,7 +33,7 @@ elif  [ $FILE == "afhq-cat-dataset" ]; then
     # bash scripts/afhq_validation_images.sh
 
 elif  [ $FILE == "celeba-dataset" ]; then
-    DEST_DIR=./data
+    DEST_DIR=./data/celeba
     ZIP_FILE="$DEST_DIR/celeba-dataset.zip"
     mkdir -p $DEST_DIR
     echo "Downloading CelebA dataset..."
@@ -47,7 +47,7 @@ elif  [ $FILE == "celeba-dataset" ]; then
     else
         echo "Error: ZIP file not found after download!"
         exit 1
-    mv ./data/img_align_celebe ./data/celeba
+    mv ./data/celeba/img_align_celeba/img_align_celeba ./data/celeba
     fi
 else
     echo "Available arguments are pretrained-network-celeba, pretrained-network-afhq-cat, celeba-dataset, celeba-hq-dataset, and afhq-cat-dataset."
