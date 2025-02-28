@@ -11,8 +11,8 @@ class ComputeMetric:
         self.args = args
         self.generative_method = generative_method
         self.save_path = self.args.root + \
-            'results/{}/{}/'.format(
-                self.args.dataset, self.args.latent)
+            'results/{}/'.format(
+                self.args.dataset)
 
     def compute_metrics(self, num_samples):
         block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[2048]

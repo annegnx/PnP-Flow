@@ -159,16 +159,16 @@ class FLOW_MATCHING(object):
     def train(self, data_loaders):
 
         self.save_path = self.args.root + \
-            'results/{}/{}/ot/'.format(
-                self.args.dataset, self.args.latent)
+            'results/{}/ot/'.format(
+                self.args.dataset)
         try:
             os.makedirs(self.save_path)
         except BaseException:
             pass
 
         self.model_path = self.args.root + \
-            'model/{}/{}/ot/'.format(
-                self.args.dataset, self.args.latent)
+            'model/{}/ot/'.format(
+                self.args.dataset)
         try:
             os.makedirs(self.model_path)
         except BaseException:

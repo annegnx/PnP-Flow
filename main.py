@@ -88,15 +88,15 @@ def main():
 
         if args.model == "ot" or args.model == "gradient_step":
             model_path = args.root + \
-                'model/{}/{}/{}/model_final.pt'.format(
-                    args.dataset, args.latent, args.model)
+                'model/{}/{}/model_final.pt'.format(
+                    args.dataset, args.model)
             load_model(args.model, model, state, download=False,
                        checkpoint_path=model_path, dataset=None,  device=device)
             model.eval()
 
         elif args.model == "rectified":
-            model_path = args.root + 'model/{}/{}/{}/model_final.pth'.format(
-                args.dataset, args.latent, args.model)
+            model_path = args.root + 'model/{}/{}/model_final.pth'.format(
+                args.dataset, args.model)
             load_model(args.model, model, state, download=False,
                        checkpoint_path=model_path, dataset=None, device=device)
             model.eval()

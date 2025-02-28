@@ -6,7 +6,6 @@ EVAL:
     batch_size_train: 16               # batch size for training
     num_epoch: 100                  # number of epochs for training
     lr: 0.0001                      # learning rate for training
-    latent: 'gaussian'              # latent distribution (gaussian)
     train: False                    # train the flow model if True
     lipschitz_constraint: None     # soft constraint on the spectral norm of the Jacobian
     finetune: False                 # finetuning of the model
