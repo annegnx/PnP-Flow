@@ -29,7 +29,7 @@ elif  [ $FILE == "afhq-cat-dataset" ]; then
     wget -N $URL -O $ZIP_FILE
     unzip $ZIP_FILE -d $DEST_DIR
     rm $ZIP_FILE
-    bash scripts/afhq_validation_images.bash
+    bash scripts/afhq_validation_images.sh
 
 elif  [ $FILE == "celeba-dataset" ]; then
     DEST_DIR=data/celeba
