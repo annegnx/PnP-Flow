@@ -21,7 +21,7 @@ elif  [ $FILE == "celeba-hq-dataset" ]; then
     rm $ZIP_FILE
 
 elif  [ $FILE == "afhq-cat-dataset" ]; then
-    DEST_DIR=./data/afhq_cat
+    DEST_DIR=./data
     mkdir -p $DEST_DIR
     URL=https://www.dropbox.com/s/t9l9o3vsx2jai3z/afhq.zip?dl=0
     ZIP_FILE=./data/afhq.zip
@@ -29,7 +29,8 @@ elif  [ $FILE == "afhq-cat-dataset" ]; then
     wget -N $URL -O $ZIP_FILE
     unzip $ZIP_FILE -d $DEST_DIR
     rm $ZIP_FILE
-    bash scripts/afhq_validation_images.sh
+    mv ./data/afhq ./data/afhq_cat
+    # bash scripts/afhq_validation_images.sh
 
 elif  [ $FILE == "celeba-dataset" ]; then
     DEST_DIR=data/celeba
