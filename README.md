@@ -102,9 +102,9 @@ You can either directely run
 ```python
 python main.py --opts dataset celeba train False eval True problem inpainting method pnp_flow
 ```
-or the use the bash file ```scripts/script_val.sh```.
+or the use the bash file ```scripts/script_test.sh```.
 
-Visual results will be saved in ```results/celeba/gaussian/inpainting```.
+Visual results will be saved in ```results/celeba/inpainting```.
 
 ## Acknowledgements
 This repository builds upon the following publicly available codes:
