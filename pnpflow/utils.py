@@ -16,7 +16,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import torchvision.transforms as v2
 import argparse
-from skimage.metrics import peak_signal_noise_ratio as PSNR
+from torchmetrics.functional.image import peak_signal_noise_ratio as PSNR
 from ignite.metrics import SSIM
 from collections import defaultdict
 import math
@@ -443,10 +443,10 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
     cols = int(math.sqrt(batch_size))  # Number of columns
     rows = int(batch_size / cols)   # Number of rows
 
-    clean_img = clean_img.permute(0, 2, 3, 1).cpu().data.numpy()
-    noisy_img = noisy_img.permute(0, 2, 3, 1).cpu().data.numpy()
-    rec_img = rec_img.permute(0, 2, 3, 1).cpu().data.numpy()
-    H_adj_noisy_img = H_adj_noisy_img.permute(0, 2, 3, 1).cpu().data.numpy()
+    clean_img = clean_img.permute(0, 2, 3, 1).cpu().data
+    noisy_img = noisy_img.permute(0, 2, 3, 1).cpu().data
+    rec_img = rec_img.permute(0, 2, 3, 1).cpu().data
+    H_adj_noisy_img = H_adj_noisy_img.permute(0, 2, 3, 1).cpu().data
 
     if iter != 'final':
         if batch_size == 1:
@@ -454,8 +454,8 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
             plt.imshow(rec_img[0])
         elif batch_size == 2:
             fig, ax = plt.subplots(1, 2)
-            ax[0].imshow(rec_img[0])
-            ax[1].imshow(rec_img[1])
+            ax[0].imshow(rec_img[0].numpy())
+            ax[1].imshow(rec_img[1].numpy())
             for ax_ in ax.flatten():
                 ax_.set_xticks([])
                 ax_.set_yticks([])
@@ -464,10 +464,10 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
             for i in range(rows):
                 for j in range(cols):
                     if args.num_channels == 1:
-                        ax[i, j].imshow(rec_img[i + j * rows].squeeze(-1),
+                        ax[i, j].imshow(rec_img[i + j * rows].squeeze(-1).numpy(),
                                         cmap='gray', vmin=0, vmax=1)
                     else:
-                        ax[i, j].imshow(rec_img[i + j * rows])
+                        ax[i, j].imshow(rec_img[i + j * rows].numpy())
 
             for ax_ in ax.flatten():
                 ax_.set_xticks([])
@@ -483,20 +483,20 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
 
             if batch_size == 1:
                 fig = plt.figure()
-                plt.imshow(img[0])
+                plt.imshow(img[0].numpy())
             elif batch_size == 2:
                 fig, ax = plt.subplots(1, 2)
-                ax[0].imshow(img[0])
-                ax[1].imshow(img[1])
+                ax[0].imshow(img[0].numpy())
+                ax[1].imshow(img[1].numpy())
             else:
                 fig, ax = plt.subplots(rows, cols, figsize=(20, 20))
                 for i in range(rows):
                     for j in range(cols):
                         if args.num_channels == 1:
-                            ax[i, j].imshow(img[i + j * rows].squeeze(-1),
+                            ax[i, j].imshow(img[i + j * rows].squeeze(-1).numpy(),
                                             cmap='gray', vmin=0, vmax=1)
                         else:
-                            ax[i, j].imshow(img[i + j * rows])
+                            ax[i, j].imshow(img[i + j * rows].numpy())
 
                 for ax_ in ax.flatten():
                     ax_.set_xticks([])
@@ -599,16 +599,16 @@ def compute_psnr(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
     rec_img = postprocess(rec_img.clone(), args)
     H_adj_noisy_img = postprocess(H_adj(noisy_img), args)
 
-    clean_img = clean_img.permute(0, 2, 3, 1).cpu().data.numpy()
+    clean_img = clean_img.permute(0, 2, 3, 1).cpu().data
     if args.problem == 'superresolution' or args.problem == 'superresolution_bicubic':
-        noisy_img = H_adj_noisy_img.permute(0, 2, 3, 1).cpu().data.numpy()
+        noisy_img = H_adj_noisy_img.permute(0, 2, 3, 1).cpu().data
     else:
-        noisy_img = noisy_img.permute(0, 2, 3, 1).cpu().data.numpy()
-    rec_img = rec_img.permute(0, 2, 3, 1).cpu().data.numpy()
+        noisy_img = noisy_img.permute(0, 2, 3, 1).cpu().data
+    rec_img = rec_img.permute(0, 2, 3, 1).cpu().data
 
     # Compute PSNR values
-    psnr_rec = PSNR(clean_img, rec_img, data_range=1.0)
-    psnr_noisy = PSNR(clean_img, noisy_img, data_range=1.0)
+    psnr_rec = PSNR(rec_img, clean_img,  data_range=1.0, dim=(1, 2, 3))
+    psnr_noisy = PSNR(noisy_img, clean_img, data_range=1.0,  dim=(1, 2, 3))
 
     # Save PSNR restored values
     rec_filename = os.path.join(
