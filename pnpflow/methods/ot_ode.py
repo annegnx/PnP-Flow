@@ -149,14 +149,14 @@ class OT_ODE(object):
                     if self.args.save_results:
                         if iteration % 10 == 0 or self.should_save_image(iteration, steps):
                             restored_img = x.detach().clone()
-                    # utils.save_images(
-                    #     clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-                    utils.compute_psnr(clean_img, noisy_img,
-                                       restored_img, self.args, H_adj, iter=iteration)
-                    utils.compute_ssim(clean_img, noisy_img,
-                                       restored_img, self.args, H_adj, iter=iteration)
-                    utils.compute_lpips(clean_img, noisy_img,
-                                        restored_img, self.args, H_adj, iter=iteration)
+                            # utils.save_images(
+                            #     clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                            utils.compute_psnr(clean_img, noisy_img,
+                                               restored_img, self.args, H_adj, iter=iteration)
+                            utils.compute_ssim(clean_img, noisy_img,
+                                               restored_img, self.args, H_adj, iter=iteration)
+                            utils.compute_lpips(clean_img, noisy_img,
+                                                restored_img, self.args, H_adj, iter=iteration)
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
