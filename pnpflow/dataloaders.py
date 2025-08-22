@@ -84,9 +84,9 @@ class DataLoaders:
             ])
 
             # transform = False
-            img_dir_test = './data/afhq_cat/test/cat/'
-            img_dir_val = './data/afhq_cat/val/cat/'
-            img_dir_train = './data/afhq_cat/train/cat/'
+            img_dir_test = '.data/afhq_cat/test/cat/'
+            img_dir_val = '.data/afhq_cat/val/cat/'
+            img_dir_train = '.data/afhq_cat/train/cat/'
             test_dataset = AFHQDataset(
                 img_dir_test, batchsize=self.batch_size_test, transform=transform)
             val_dataset = AFHQDataset(
@@ -154,7 +154,7 @@ class CelebAHQDataset(Dataset):
     """CelebA HQ dataset."""
 
     def __init__(self, data_dir, batchsize, transform=None):
-        self.files = os.listdir(data_dir)
+        self.files = sorted(os.listdir(data_dir))
         self.root_dir = data_dir
         self.num_imgs = len(os.listdir(self.root_dir))
         self.transform = transform
@@ -185,7 +185,7 @@ class AFHQDataset(Dataset):
     """AFHQ Cat dataset."""
 
     def __init__(self, img_dir, batchsize, category='cat', transform=None):
-        self.files = os.listdir(img_dir)
+        self.files = sorted(os.listdir(img_dir))
         self.num_imgs = len(self.files)
         self.batchsize = batchsize
         self.img_dir = img_dir
