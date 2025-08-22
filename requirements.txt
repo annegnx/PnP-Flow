@@ -1,6 +1,6 @@
 autograd==1.6.2
 Cython==3.0.10
-deepinv==0.2.0
+deepinv==0.3.2
 diffeqtorch==1.0.0
 gmpy2
 h5py
