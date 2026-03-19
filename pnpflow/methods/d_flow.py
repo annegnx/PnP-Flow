@@ -59,11 +59,11 @@ class D_FLOW(object):
         x = z_t[-1].detach()
         return x
 
-    def gaussian(self, img):
+    def compute_norm(self, img):
         if img.ndim != 4:
             raise RuntimeError(
                 f"Expected input `img` to be an 4D tensor, but got {img.shape}")
-        return (img**2).sum([1, 2, 3]) * 0.5
+        return torch.sqrt((img**2).sum([1, 2, 3]))
 
     def solve_ip(self, test_loader, degradation, sigma_noise):
         H = degradation.H
@@ -109,8 +109,9 @@ class D_FLOW(object):
 
                 def closure():
                     optim_img.zero_grad()  # Reset gradients
-                    reg = - torch.clamp(self.gaussian(z), min=-1e6, max=1e6) + (
-                        d - 1) * torch.log(torch.sqrt(torch.sum(z**2, dim=(1, 2, 3))) + 1e-5)
+                    norm_x0 = self.compute_norm(z)
+                    reg = 0.5 * torch.clamp(norm_x0**2, min=-1e6, max=1e6) - (
+                        d - 1) * torch.log(norm_x0 + 1e-5)
 
                     loss = (torch.sum((H(self.forward_flow_matching(z)) -
                             noisy_img)**2, dim=(1, 2, 3)) + self.args.lmbda * reg).sum()
@@ -120,7 +121,7 @@ class D_FLOW(object):
                 optim_img.step(closure)
 
                 restored_img = self.forward_flow_matching(z.detach())
-      
+
                 if self.args.compute_time:
                     torch.cuda.synchronize()
                     time_counter_2 = perf_counter()
