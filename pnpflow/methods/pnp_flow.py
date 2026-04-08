@@ -43,7 +43,7 @@ class PNP_FLOW(object):
         else:
             raise ValueError('Noise type not supported')
 
-    def prox_datafit(self, x, y, H, H_adj, step_size, lr=0.2, n_iter=5):
+    def prox_datafit(self, x, y, H, H_adj, step_size, lr=0.1, n_iter=100):
         z = x.clone()
         for _ in range(n_iter):
             grad = (z - x) + step_size * self.grad_datafit(z, y, H, H_adj)
