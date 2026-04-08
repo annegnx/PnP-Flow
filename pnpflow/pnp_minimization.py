@@ -27,7 +27,7 @@ def set_seed(seed: int):
     torch.backends.cudnn.benchmark = False
 
 # seed 2
-set_seed(4)
+set_seed(7)
 
 #TODO: (i) check with a point far from the mean (ii) effect of subiterations ?? (too simple example : 1 grad step = full minimization)
 
@@ -65,13 +65,7 @@ def H_adj(x):
     return M @ x
 
 def grad_datafit(x, y, sigma_noise=5e-2):
-    return H_adj(H(x) - y) / (sigma_noise ** 2)
-
-# def log_pt(x, t):
-#     return - ((x - t * mu_1) ** 2).sum() / (2 * ((t * sigma_1) ** 2 + (1 - t)**2))
-
-# def score(x, t):
-#     return - (x - t * mu_1) / ((t * sigma_1) ** 2 + (1 - t)**2)
+    return H_adj(H(x) - y)
 
 def log_pt_gmm(x, t):
     sigma_t = ((t * sigma_1) ** 2 + (1 - t) ** 2) ** 0.5
@@ -107,55 +101,94 @@ def moreau_grad_enveloppe(x, t):
     bt = - (1 - t) ** 2 / (t)
     ct = - (1 - t) ** 3 / (2 * t ** 2)
     dt = - (1 - t) ** 4 / (2 * t ** 2)
-    return bt * score_gmm(x, t)
+    return at * x + bt * score_gmm(x, t)
+
+def denoiser(x, t):
+    at = 1 / t
+    bt = (1 - t) ** 2 / t
+    return at * x + bt * score_gmm(x, t)
 
 def reg(x, t):
+    at = - (1 - t) / (t)
     bt = - (1 - t) ** 2 / (t)
-    return bt * score_gmm(x, t)
+    return at * x + bt * score_gmm(x, t)
 
 def objective_value_fun(x, t):
-    F = ((H(x) - y) ** 2).sum()
+    F = 0.5 * ((H(x) - y) ** 2).sum()
 
     at = - (1 - t) / (2 * t)
     bt = - (1 - t) ** 2 / (t)
     R_t = at * (x ** 2).sum() + bt * log_pt_gmm(x, t)
 
+    # return F.item()
     return (F + R_t).item()
 
 def step_size(t):
-    alpha = 1.0
-    beta = 0.05
+    alpha = 2.0
+    beta = 0.01
+    # return (1 - t) ** beta
     return t ** alpha * (1 - t) ** beta
 
 sigma_noise = 3.0
-ground_truth = x1[np.random.randint(mus.size(0) * m)]
+ground_truth = x1[np.random.randint(x1.size(0))]
 y = H(ground_truth) + torch.randn(d) * sigma_noise
 
 d_list = []
 # n_steps = [10, 25, 50, 100, 250,  500, 1000]
-n_steps = [100]
+n_steps = [10]
 for N in n_steps:
     delta = 1 / N
-    sub_iter = 250
-    stoppage_time = -1 #0.5
+    num_samples = 100
+    sub_iter = 1
+    stoppage_time = 1.0 #0.5
     stoppage_iter = int(stoppage_time * N)
 
     z = torch.randn(d) * sigma_0
     z_list = [z]
     objective_values = []
-    lmbda = 1.0
-    for iteration in range(1, N):
+    for iteration in range(1, N + 1):
         t = delta * iteration
         for k in range(sub_iter if iteration == stoppage_iter or stoppage_iter < 0 else 1):
-            # next_z = z - step_size(t, sigma_noise=sigma_noise) * (grad_datafit(z, y, sigma_noise=sigma_noise) * sigma_noise ** 2 + reg(z, t))
-            next_z = z - step_size(t) / sub_iter * (grad_datafit(z, y, sigma_noise) + lmbda * reg(z, t))
-            # next_z = tmp - lmbda * step_size(t, sigma_noise) * reg(tmp, t)
-            # print(iteration, k, ((grad_datafit(z, y, sigma_noise=sigma_noise) + reg(z, t)) ** 2).sum().item())
+            tmp = z - step_size(t) * grad_datafit(z, y, sigma_noise)
+
+            exact_score = score_gmm(tmp, t)
+            exact_scaled_score = score_gmm(t * tmp, t)
+            score_err = []
+            scaled_score_err = []
+
+            M = 1
+            for _ in range(M):
+                tmp_mean = torch.zeros_like(tmp)
+                for i in range(num_samples):
+                    eps = torch.randn_like(tmp)
+                    tmp_tilde = t * tmp + (1 - t) * eps
+                    alpha = step_size(t) / t
+                    tmp_mean += (1 - alpha) * tmp + alpha * denoiser(tmp_tilde, t) - alpha * (1 - t) / t * eps
+
+                    # approx_score = tmp_mean / (i + 1) - tmp
+                    # score_err.append((approx_score - exact_score).pow(2).sum().sqrt())
+                    # scaled_score_err.append((approx_score - exact_scaled_score).pow(2).sum().sqrt())
+                tmp = tmp_mean / num_samples
+            next_z = tmp
+            # tmp_tilde = next_z = tmp + step_size(t) * score_gmm(tmp, t)
+
             z_list.append(next_z.clone())
             if iteration == stoppage_iter:
                 objective_values.append(objective_value_fun(next_z, t))
             if sub_iter > 1 and k < sub_iter - 1:
                 z = next_z
+        
+        if False:
+            fig = plt.figure()
+            plt.plot(score_err, label='true score error')
+            plt.plot(scaled_score_err, label='scaled score error')
+            plt.title(f"Score error at t={t}")
+            print(f"t={t:.2f} exact error", score_err[-1])
+            print(f"t={t:.2f} scaled error", scaled_score_err[-1])
+            plt.grid()
+            plt.legend()
+            plt.savefig(path_results + f'score_error_{t:.2f}.pdf', bbox_inches='tight', pad_inches=0)
+            plt.close()
 
         if iteration == stoppage_iter and sub_iter > 1 and True:
             print(objective_values)
@@ -169,7 +202,7 @@ for N in n_steps:
             fig.savefig(path_results + f'objective_minization_t={stoppage_time:.2f}.pdf')
             plt.close()
             break
-        if True:
+        if False:
             fig = plt.figure()
             plt.scatter(x0.numpy()[:, 0], x0.numpy()[:, 1], color='#0084af', alpha=0.2)
             plt.scatter(x1.numpy()[:, 0], x1.numpy()[:, 1], color='#006a00', alpha=0.2)
@@ -177,12 +210,15 @@ for N in n_steps:
             plt.scatter(ground_truth.numpy()[0], ground_truth.numpy()[1], color='red', s=150, marker='*', label='ground truth')
             plt.scatter(y.numpy()[0], y.numpy()[1], color='orange', s=150, marker='X', label='measurement')
             plt.scatter(z.numpy()[0], z.numpy()[1], color='black', s=70, marker='o', label='latent')
+            plt.scatter(tmp_tilde.numpy()[0], tmp_tilde.numpy()[1], color='green', s=70, marker='o', label='z_t_tilde')
+            plt.scatter(eps.numpy()[0], eps.numpy()[1], color='green', s=70, marker='o', label='eps')
+            plt.scatter(tmp_mean.numpy()[0], tmp_mean.numpy()[1], color='yellow', s=70, marker='o', label='x_star')
 
             z_np = z.numpy()
-            tmp_np = z.numpy()
+            tmp_np = tmp_tilde.numpy()
             next_z_np = next_z.numpy()
-            grad_step = - grad_datafit(z, y, sigma_noise).numpy()
-            reg_step = - lmbda * reg(z, t).numpy()
+            grad_step = - step_size(t) * grad_datafit(z, y, sigma_noise).numpy()
+            reg_step = (denoiser(tmp_tilde, t) - tmp - (1 - t) / t * eps).numpy()
             plt.arrow(z_np[0], z_np[1],
                     next_z_np[0] - z_np[0],
                     next_z_np[1] - z_np[1],
@@ -228,7 +264,7 @@ plt.scatter(y.numpy()[0], y.numpy()[1], color='orange', s=150, marker='X', label
 x_list = [z[0] for z in z_list]
 y_list = [z[1] for z in z_list]
 p = len(z_list)
-plt.plot(x_list[:p//2], y_list[:p//2], c='black', linestyle="dotted")
+plt.plot(x_list[:p//2 + 1], y_list[:p//2 + 1], c='black', linestyle="dotted")
 plt.plot(x_list[p//2:], y_list[p//2:], c='black')
 plt.scatter(x_list[-1], y_list[-1], s=100, c='black')
 
@@ -238,7 +274,7 @@ plt.yticks()
 # plt.xlim(-5, 70)
 # plt.ylim(-30, 50)
 plt.axis('off')
-fig.savefig(path_results + f'final_reg.pdf')
+fig.savefig(path_results + f'final_reg.pdf', bbox_inches='tight', pad_inches=0)
 plt.close()
 
 if True:
@@ -251,7 +287,7 @@ if True:
     plt.grid()
     plt.xlabel('#Total Iterations')
     plt.ylabel('Squared distance || ground_truth - z ||^2')
-    fig.savefig(path_results + f'distance_plot.pdf')
+    fig.savefig(path_results + f'distance_plot.pdf', bbox_inches='tight', pad_inches=0)
     plt.close()
     print(d_list)
     print(((ground_truth - y) ** 2).sum().sqrt().item())

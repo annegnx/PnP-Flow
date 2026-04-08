@@ -1,0 +1,6 @@
+METHOD:
+    max_iter: 50
+    base_steps_pnp: 1
+    eta: 0.0
+    step_size: 0.01
+    lmbda: 1.0

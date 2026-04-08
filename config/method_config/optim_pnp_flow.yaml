@@ -1,9 +1,0 @@
-METHOD:
-    max_iter: 500
-    base_steps_pnp: 50
-    lr_pnp: 1.0
-    gamma_style: 'alpha_1_minus_t'
-    num_samples: 5
-    alpha: 0.3
-    beta: 0.2
-    interpolation_mode: 'random'

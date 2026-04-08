@@ -4,7 +4,6 @@ METHOD:
     gamma_style: 'alpha_1_minus_t'
     num_samples: 5
     alpha: 0.5
-    sub_iter: 50
-    lr_scaler: 1.0
+    sub_iter: 1
     interpolation_mode: 'random'
     stoppage_iter: -1
