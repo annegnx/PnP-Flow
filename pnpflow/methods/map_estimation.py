@@ -35,6 +35,12 @@ class MAP_ESTIMATION(object):
         }
         return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
 
+    def inner_steps(self, k, eta):
+        if self.args.base_steps_pnp > 1:
+            return int(self.args.base_steps_pnp * (k + 1) ** (1.0 + eta))
+        else:
+            return self.args.base_steps_pnp
+
     def grad_datafit(self, x, y, H, H_adj):
         if self.args.noise_type == 'gaussian':
             return H_adj(H(x) - y) / (self.args.sigma_noise**2)
@@ -119,15 +125,23 @@ class MAP_ESTIMATION(object):
                             self.args, H_adj, iter=f'_grad_{k}')
 
                     x_ref = x.clone()
-                    steps = 1 #int(self.args.base_steps_pnp * (k + 1) ** (1.0 + eta))
-                    for count, iteration in enumerate(range(int(steps))):
-                        if self.args.compute_time:
-                            time_counter_1 = perf_counter()
+                    steps = self.inner_steps(k, eta)
+                    if steps > 1:
+                        for iteration in enumerate(range(int(steps))):
+                            if self.args.compute_time:
+                                time_counter_1 = perf_counter()
 
+                            sigma_k = np.sqrt(tau / (iteration + 2))
+                            alpha_k = 1 / (iteration + 3)
+                            t_k = 1 / (1 + sigma_k)
+                            t1 = torch.ones(len(x), device=self.device) * t_k
+
+                            x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x_ref
+                    else:
                         sigma_k = np.sqrt(tau / (k + 2))
+                        alpha_k = 1 / (k + 3)
                         t_k = 1 / (1 + sigma_k)
                         t1 = torch.ones(len(x), device=self.device) * t_k
-                        alpha_k = 1 / (k + 3)
 
                         x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x_ref
 

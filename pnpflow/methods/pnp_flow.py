@@ -145,7 +145,13 @@ class PNP_FLOW(object):
                     lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
                     # z = x - lr_t * \
                     #     self.grad_datafit(x, noisy_img, H, H_adj)
+                    # t = delta * iteration
+                    # nu_t = (1 - t) / np.sqrt(t ** 2 + (1 - t) ** 2)
                     z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=lr_t)
+
+                    if iteration % 10 == 0:
+                        utils.save_images(clean_img, noisy_img, z.clone(),
+                            self.args, H_adj, iter=f'_grad_{iteration}')
 
                     if self.args.stoppage_iter > 0:
                         sub_iter = self.args.sub_iter if iteration == self.args.stoppage_iter else 1
