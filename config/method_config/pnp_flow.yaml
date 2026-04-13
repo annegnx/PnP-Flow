@@ -6,4 +6,4 @@ METHOD:
     alpha: 0.5
     interpolation_mode: 'random'
     datafit_mode: 'gd' # 'gd' for gd step on datafit 'prox' for prox step
-    denoise_mode: 'prox' # 'vanilla' for PnP-Flow 'prox' for Approx-PGD 
+    denoise_mode: 'prox' # 'gd' for PnP-Flow 'prox' for Approx-PGD 

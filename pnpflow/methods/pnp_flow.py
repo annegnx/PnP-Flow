@@ -43,11 +43,14 @@ class PNP_FLOW(object):
         else:
             raise ValueError('Noise type not supported')
 
-    def prox_datafit(self, x, y, H, H_adj, step_size, lr=0.1, n_iter=100):
+    def prox_datafit(self, x, y, H, H_adj, step_size, lr=1.0, n_iter=50):
         z = x.clone()
-        for _ in range(n_iter):
+        for i in range(n_iter):
             grad = (z - x) + step_size * self.grad_datafit(z, y, H, H_adj)
-            z = (z - lr * grad)
+            lr_i = lr / (i + 1)
+            
+            z = (z - lr_i * grad)
+            # print(i, grad.pow(2).mean(0).sum().sqrt().item())
         return z
 
     def get_backward(self, y, H_adj):
@@ -89,7 +92,7 @@ class PNP_FLOW(object):
         with torch.no_grad():
             for iteration in range(int(num_steps)):
                 t = delta * iteration
-                lr_t = (1 - t) ** (0.8)
+                lr_t = (1 - t) ** (0.2)
                 t1 = torch.ones(
                     len(x), device=self.device) * t
                 
@@ -169,28 +172,23 @@ class PNP_FLOW(object):
                         len(x), device=self.device) * delta * iteration
                     lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
                     if self.args.datafit_mode == 'prox':
-                        z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=lr_t)
+                        z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=4 * lr_t)
                     elif self.args.datafit_mode == 'gd':
                         z = x - lr_t * \
                             self.grad_datafit(x, noisy_img, H, H_adj)
 
-                    if iteration % 10 == 0:
-                        utils.save_images(clean_img, noisy_img, z.clone(),
-                            self.args, H_adj, iter=f'_grad_{iteration}')
-
-                    if self.args.denoise_mode == 'vanilla':
-                        x = z
+                    if self.args.denoise_mode == 'gd':
                         x_new = torch.zeros_like(x)
                         for _ in range(num_samples):
                             z_tilde, _ = self.interpolation_step(
-                                x, t1.view(-1, 1, 1, 1), eps=eps)
+                                z, t1.view(-1, 1, 1, 1), eps=eps)
         
                             x_new += self.denoiser(z_tilde, t1)
 
                         x_new /= num_samples
                         x = x_new
                     elif self.args.denoise_mode == 'prox':
-                        num_steps = 2 * (iteration + 1)
+                        num_steps = 5 #int(1 + (iteration + 1) / 2)
                         x = self.solve_prox(z, num_steps=num_steps, step_size=lr_t)
                     
                     if self.args.compute_time:
