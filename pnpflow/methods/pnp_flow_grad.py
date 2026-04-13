@@ -121,36 +121,33 @@ class PNP_FLOW_GRAD(object):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
-                    # linear time
-                    t = delta * iteration
-                    # exponential time
-                    # lmda = 0.995
-                    # t = lmda ** (int(steps) - iteration)
-                    # poly time
-                    # t = 1. / (1 + (iteration + 5) ** (-1.0))
-                    # def sigma_rescale(c, t):
-                    #     kappa = (t ** 2 + (1 - t) ** 2) / (t ** 2 + c * (1 - t) ** 2)
-                    #     return kappa * t
-                    # sigma = 1000.0 / ((iteration + 1) ** (1.5))
-                    # t = 1 / (1 + sigma ** (0.5))
+                    if self.args.schedule == 'linear':
+                        tau = 1.0
+                        t = delta * iteration
+                        sigma_t = (1 - t) / t
+                        lr_t = self.args.lr_pnp * (1 - t) ** self.args.alpha
+                        beta = lr_t ** (1.0)
+
+                    elif self.args.schedule == 'poly':
+                        C = 1.0
+                        tau = 1.0
+                        sigma_t = np.sqrt(C / (iteration + 2))
+                        t = 1 / (1 + sigma_t)
+                        lr_t = 1 / (iteration + 2)
+                        beta = tau / C
 
                     t1 = torch.ones(len(x), device=self.device) * t
-                    tt1 = torch.ones(len(x), device=self.device) * t #sigma_rescale(1 + 2 * t ** 2, t)
-
-                    sigma_t = (1 - t) / t
-                    tau = 1.0
                     lr_t = self.learning_rate_strat(self.args.lr_pnp, t1).mean().item()
-                    beta = lr_t ** (1.0)
-                    print(t, lr_t, beta * sigma_t ** 2)#, lr_t * self.grad_datafit(x, noisy_img, H, H_adj).abs().mean().item())
+                    print(t, lr_t, beta * sigma_t ** 2)
 
                     x_data = x.clone()
                     x_new = torch.zeros_like(x)
                     for _ in range(num_samples):
-                        x_tilde, eps = self.interpolation_step(x, t1.view(-1, 1, 1, 1))
-                        x_new += (1 - beta) * x + beta * self.denoiser(x_tilde, tt1) #- sigma_t * eps
+                        x_tilde, _ = self.interpolation_step(x, t1.view(-1, 1, 1, 1))
+                        x_new += (1 - beta) * x + beta * self.denoiser(x_tilde, t1)
 
-                        x_data_tilde = x_data #+ sigma_t * eps
-                        x_new += - lr_t * self.grad_datafit(x_data_tilde, noisy_img, H, H_adj) #+ lr_t * sigma_t * H_adj(H(eps))
+                        x_data_tilde = x_data
+                        x_new += - lr_t * self.grad_datafit(x_data_tilde, noisy_img, H, H_adj)
                     x = x_new / num_samples
 
                     if self.args.compute_time:

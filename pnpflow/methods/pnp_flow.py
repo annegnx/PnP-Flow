@@ -79,6 +79,31 @@ class PNP_FLOW(object):
     def denoiser(self, x, t):
         v = self.model_forward(x, t)
         return x + (1 - t.view(-1, 1, 1, 1)) * v
+    
+    def solve_prox(self, x, num_steps=100, step_size=1.0):
+        delta = 1 / num_steps
+        num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
+
+        # TODO: fix alpha_k and sigma_k so that we compute prox_{-step_size * log p}
+        x_ref = x.clone()
+        with torch.no_grad():
+            for iteration in range(int(num_steps)):
+                t = delta * iteration
+                lr_t = (1 - t) ** (0.8)
+                t1 = torch.ones(
+                    len(x), device=self.device) * t
+                
+                x = x - lr_t * (x - x_ref)
+
+                x_new = torch.zeros_like(x)
+                for _ in range(num_samples):
+                    z_tilde, _ = self.interpolation_step(
+                        x, t1.view(-1, 1, 1, 1))
+                    x_new += self.denoiser(z_tilde, t1)
+                x_new /= num_samples
+                x = x_new
+        
+        return x
 
     def solve_ip(self, test_loader, degradation, sigma_noise, H_funcs=None):
         H = degradation.H
@@ -143,34 +168,30 @@ class PNP_FLOW(object):
                     t1 = torch.ones(
                         len(x), device=self.device) * delta * iteration
                     lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
-                    # z = x - lr_t * \
-                    #     self.grad_datafit(x, noisy_img, H, H_adj)
-                    # t = delta * iteration
-                    # nu_t = (1 - t) / np.sqrt(t ** 2 + (1 - t) ** 2)
-                    z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=lr_t)
+                    if self.args.datafit_mode == 'prox':
+                        z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=lr_t)
+                    elif self.args.datafit_mode == 'gd':
+                        z = x - lr_t * \
+                            self.grad_datafit(x, noisy_img, H, H_adj)
 
                     if iteration % 10 == 0:
                         utils.save_images(clean_img, noisy_img, z.clone(),
                             self.args, H_adj, iter=f'_grad_{iteration}')
 
-                    if self.args.stoppage_iter > 0:
-                        sub_iter = self.args.sub_iter if iteration == self.args.stoppage_iter else 1
-                    else:
-                        sub_iter = self.args.sub_iter
-
-                    x = z
-                    for k in range(sub_iter):
+                    if self.args.denoise_mode == 'vanilla':
+                        x = z
                         x_new = torch.zeros_like(x)
                         for _ in range(num_samples):
-                            z_tilde, eps_tilde = self.interpolation_step(
+                            z_tilde, _ = self.interpolation_step(
                                 x, t1.view(-1, 1, 1, 1), eps=eps)
-    
-                            # alpha = 1 / (iteration + 1)
-                            alpha = 0
-                            x_new += alpha * x + (1 - alpha) * self.denoiser(z_tilde, t1)
+        
+                            x_new += self.denoiser(z_tilde, t1)
 
                         x_new /= num_samples
                         x = x_new
+                    elif self.args.denoise_mode == 'prox':
+                        num_steps = 2 * (iteration + 1)
+                        x = self.solve_prox(z, num_steps=num_steps, step_size=lr_t)
                     
                     if self.args.compute_time:
                         torch.cuda.synchronize()
