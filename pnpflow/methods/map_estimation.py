@@ -127,7 +127,7 @@ class MAP_ESTIMATION(object):
                     x_ref = x.clone()
                     steps = self.inner_steps(k, eta)
                     if steps > 1:
-                        for iteration in enumerate(range(int(steps))):
+                        for iteration in range(int(steps)):
                             if self.args.compute_time:
                                 time_counter_1 = perf_counter()
 

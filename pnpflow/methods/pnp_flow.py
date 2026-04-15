@@ -170,7 +170,11 @@ class PNP_FLOW(object):
                     # print(iteration)
                     t1 = torch.ones(
                         len(x), device=self.device) * delta * iteration
-                    lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
+                    if self.args.denoise_mode == 'gd':
+                        lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
+                    else:
+                        lr_t = 1.0
+                    
                     if self.args.datafit_mode == 'prox':
                         z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=4 * lr_t)
                     elif self.args.datafit_mode == 'gd':
@@ -188,7 +192,7 @@ class PNP_FLOW(object):
                         x_new /= num_samples
                         x = x_new
                     elif self.args.denoise_mode == 'prox':
-                        num_steps = 5 #int(1 + (iteration + 1) / 2)
+                        num_steps = int(1 + (iteration + 1) / 2)
                         x = self.solve_prox(z, num_steps=num_steps, step_size=lr_t)
                     
                     if self.args.compute_time:

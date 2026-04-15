@@ -452,6 +452,7 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
         if batch_size == 1:
             fig = plt.figure()
             plt.imshow(rec_img[0])
+            plt.axis('off')
         elif batch_size == 2:
             fig, ax = plt.subplots(1, 2)
             ax[0].imshow(rec_img[0].numpy())
@@ -484,6 +485,7 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
             if batch_size == 1:
                 fig = plt.figure()
                 plt.imshow(img[0].numpy())
+                plt.axis('off')
             elif batch_size == 2:
                 fig, ax = plt.subplots(1, 2)
                 ax[0].imshow(img[0].numpy())
