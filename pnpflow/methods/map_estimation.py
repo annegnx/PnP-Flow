@@ -40,6 +40,12 @@ class MAP_ESTIMATION(object):
             return int(self.args.base_steps_pnp * (k + 1) ** (1.0 + eta))
         else:
             return self.args.base_steps_pnp
+    
+    def get_sigma_schedule(self, k):
+        c = self.args.sigma_noise ** 2 / 2
+        alpha = self.args.alpha
+        print(c * ((1 + 1 / (k + 1) ** alpha) - 1))
+        return np.sqrt(c * ((1 + 1 / (k + 1) ** alpha) - 1))
 
     def grad_datafit(self, x, y, H, H_adj):
         if self.args.noise_type == 'gaussian':
@@ -67,7 +73,8 @@ class MAP_ESTIMATION(object):
         return x + (1 - t.view(-1, 1, 1, 1)) * v
 
     def mmse(self, x, t):
-        return self.denoiser(t.view(-1, 1, 1, 1) * x, t)
+        noise = 0 * (1 - t.view(-1, 1, 1, 1)) * torch.randn_like(x)
+        return self.denoiser(t.view(-1, 1, 1, 1) * x + noise, t)
 
     def solve_ip(self, test_loader, degradation, sigma_noise, H_funcs=None):
         H = degradation.H
@@ -118,6 +125,9 @@ class MAP_ESTIMATION(object):
 
                     #tau = self.args.step_size / ((k + 1) ** (0.1))
 
+                    tau = sigma_noise ** 2
+                    print(tau)
+
                     x = x - tau * lmbda * self.grad_datafit(x, noisy_img, H, H_adj) * sigma_noise ** 2
 
                     if k % 10 == 0: 
@@ -131,11 +141,23 @@ class MAP_ESTIMATION(object):
                             if self.args.compute_time:
                                 time_counter_1 = perf_counter()
 
-                            sigma_k = np.sqrt(tau / (iteration + 2))
-                            alpha_k = 1 / (iteration + 3)
-                            t_k = 1 / (1 + sigma_k)
-                            t1 = torch.ones(len(x), device=self.device) * t_k
+                            # PnP-Flow
+                            # t_k = iteration / steps
+                            # sigma_k = (1 - t_k) / t_k
+                            # alpha_k = (1 - t_k + 1/steps) ** self.args.alpha
 
+                            # MMSE Average
+                            # sigma_k = np.sqrt(tau / (iteration + 2))
+                            # alpha_k = 1 / (iteration + 3)
+                            # t_k = 1 / (1 + sigma_k)
+
+                            # New Method
+                            sigma_k = self.get_sigma_schedule(iteration)
+                            alpha_k = sigma_k ** 2 / (self.args.sigma_noise ** 2 + sigma_k ** 2)
+                            t_k = 1 / (1 + sigma_k)
+
+                            t1 = torch.ones(len(x), device=self.device) * t_k
+                            
                             x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x_ref
                     else:
                         sigma_k = np.sqrt(tau / (k + 2))
