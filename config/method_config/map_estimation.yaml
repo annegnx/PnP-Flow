@@ -1,7 +1,7 @@
 METHOD:
-    max_iter: 1
-    base_steps_pnp: 100
-    eta: -1
+    max_iter: 50
+    base_steps_pnp: 50
+    eta: -1.0
     step_size: 0.01
     lmbda: 1.0
     alpha: 2.0

@@ -134,7 +134,7 @@ def main():
             if args.noise_type == 'laplace':
                 sigma_noise = 0.3
             elif args.noise_type == 'gaussian':
-                sigma_noise = 0.05
+                sigma_noise = 0.2 #! CHANGE back to 0.05
             if args.dim_image == 128:
                 half_size_mask = 20
             elif args.dim_image == 256:

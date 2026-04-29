@@ -5,4 +5,3 @@ METHOD:
     num_samples: 5
     alpha: 0.01
     interpolation_mode: 'random'
-    schedule: 'linear' # 'linear' or 'poly'

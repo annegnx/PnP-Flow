@@ -639,11 +639,14 @@ def compute_average_psnr(args):
 
             with open(filename, 'r') as f:
                 # Only read the last experiment values
+                last_iteration = None
                 for line in list(f)[::-1]:
                     iteration, psnr = map(float, line.strip().split())
-                    psnr_by_iteration[int(iteration)].append(psnr)
-                    if int(iteration) == 0:
+                    if last_iteration is not None and int(iteration) > last_iteration:
                         break
+                    else:
+                        last_iteration = int(iteration)
+                    psnr_by_iteration[int(iteration)].append(psnr)
         psnr_averages = {iteration: np.mean(
             psnrs) for iteration, psnrs in psnr_by_iteration.items()}
 
@@ -742,11 +745,14 @@ def compute_average_lpips(args):
 
             with open(filename, 'r') as f:
                 # Only reads the last experiment values
+                last_iteration = None
                 for line in list(f)[::-1]:
                     iteration, lpips = map(float, line.strip().split())
-                    lpips_by_iteration[int(iteration)].append(lpips)
-                    if int(iteration) == 0:
+                    if last_iteration is not None and int(iteration) > last_iteration:
                         break
+                    else:
+                        last_iteration = int(iteration)
+                    lpips_by_iteration[int(iteration)].append(lpips)
 
         # Calculate the average LPIPS score for each iteration
         lpips_averages = {iteration: np.mean(
@@ -835,11 +841,15 @@ def compute_average_ssim(args):
                 args.save_path_ip, f'ssim_{word}_batch{batch}.txt')
 
             with open(filename, 'r') as f:
+                # Only read the last experiment values
+                last_iteration = None
                 for line in list(f)[::-1]:
                     iteration, ssim = map(float, line.strip().split())
-                    ssim_by_iteration[int(iteration)].append(ssim)
-                    if int(iteration) == 0:
+                    if last_iteration is not None and int(iteration) > last_iteration:
                         break
+                    else:
+                        last_iteration = int(iteration)
+                    ssim_by_iteration[int(iteration)].append(ssim)
         ssim_averages = {iteration: np.mean(
             ssims) for iteration, ssims in ssim_by_iteration.items()}
 

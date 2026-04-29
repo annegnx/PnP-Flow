@@ -41,17 +41,36 @@ class MAP_ESTIMATION(object):
         else:
             return self.args.base_steps_pnp
     
-    def get_sigma_schedule(self, k):
-        c = self.args.sigma_noise ** 2 / 2
+    def get_sigma_schedule(self, k, N, step_size):
+        # return np.sqrt(step_size / (k + 1))
+        c = step_size
         alpha = self.args.alpha
-        print(c * ((1 + 1 / (k + 1) ** alpha) - 1))
-        return np.sqrt(c * ((1 + 1 / (k + 1) ** alpha) - 1))
+        alpha = 10.0
+        beta = 0.0
+        # f = lambda k: k ** alpha * np.log(k + 1) ** beta
+        # f = lambda k: np.log(k + 1) ** beta #* k ** 0.01 
+        # return np.sqrt(c * (f(k + 2) / f(k + 1) - 1))
+        # return np.sqrt(c / ((k + 1) ** alpha * np.log(k + 2) ** 4.0))
+        # nu = (f(k + 2) / f(k + 1) - 1) / 2
+        # if k < N:
+        #     nu = (1 - (k + 1) / N) ** alpha / (1 - (1 - (k + 1)/N) ** alpha)
+        # else:
+        #     nu = 0.0
+        t = (k + 1) / N
+        # t = (np.exp(alpha * (k + 1) / N) - 1) / (np.exp(alpha) - 1)
+        # t = (1 + np.cos(np.pi * (N - k - 1) / N)) / 2
+        # t = ((k + 1) / N) ** alpha
+        # l = 1e-5
+        # t = 1 - (l) ** ((k + 1) / N)
+        return ((1 - t) / t) ** (alpha)
+        # nu = 1e-4 / (k + 1) + 1 / (k + 1) ** 3.0
+        # return np.sqrt(c * nu)
 
     def grad_datafit(self, x, y, H, H_adj):
         if self.args.noise_type == 'gaussian':
-            return H_adj(H(x) - y) / (self.args.sigma_noise**2)
+            return H_adj(H(x) - y) #/ (self.args.sigma_noise**2)
         elif self.args.noise_type == 'laplace':
-            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1)/self.args.sigma_noise
+            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1)#/self.args.sigma_noise
         else:
             raise ValueError('Noise type not supported')
 
@@ -72,9 +91,13 @@ class MAP_ESTIMATION(object):
         v = self.model_forward(x, t)
         return x + (1 - t.view(-1, 1, 1, 1)) * v
 
-    def mmse(self, x, t):
-        noise = 0 * (1 - t.view(-1, 1, 1, 1)) * torch.randn_like(x)
-        return self.denoiser(t.view(-1, 1, 1, 1) * x + noise, t)
+    def mmse(self, x, t, num_samples=5):
+        out = torch.zeros_like(x)
+        tt = t.view(-1, 1, 1, 1)
+        for _ in range(num_samples):
+            x_tilde = tt * x + (1 - tt) * torch.randn_like(x)
+            out += self.denoiser(x_tilde, t)
+        return out / num_samples
 
     def solve_ip(self, test_loader, degradation, sigma_noise, H_funcs=None):
         H = degradation.H
@@ -109,6 +132,7 @@ class MAP_ESTIMATION(object):
             # intialize the image with the adjoint operator
             # x = H_adj(torch.ones_like(noisy_img)).to(self.device)
             x = H_adj(noisy_img)
+            # x = torch.randn_like(clean_img).to(self.device)
 
             if self.args.compute_time:
                 torch.cuda.synchronize()
@@ -123,16 +147,23 @@ class MAP_ESTIMATION(object):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
-                    #tau = self.args.step_size / ((k + 1) ** (0.1))
+                    # tau scheduling
+                    # sigma_max = 1
+                    # r_k = (k + 1) ** 2
+                    # tau = sigma_max ** 2 / r_k
+                    # lmbda = r_k ** (1/2) / sigma_max ** 2
+                    tau_0 = 2.0
+                    rho = 0.90
+                    tau = tau_0 * rho ** k
+                    # lmbda = min(1.0 / tau, tau/sigma_noise)
+                    lmbda = 1/(tau) * 1/(k + 1) ** (0.1)
+                    print(f'{k}, {tau:.6f}, {lmbda * tau:.6f}')
 
-                    tau = sigma_noise ** 2
-                    print(tau)
+                    x = x - lmbda * tau * self.grad_datafit(x, noisy_img, H, H_adj)
 
-                    x = x - tau * lmbda * self.grad_datafit(x, noisy_img, H, H_adj) * sigma_noise ** 2
-
-                    if k % 10 == 0: 
-                        utils.save_images(clean_img, noisy_img, x.clone(),
-                            self.args, H_adj, iter=f'_grad_{k}')
+                    # if k % 1 == 0: 
+                    #     utils.save_images(clean_img, noisy_img, x.clone(),
+                    #         self.args, H_adj, iter=f'_grad_{k}')
 
                     x_ref = x.clone()
                     steps = self.inner_steps(k, eta)
@@ -143,7 +174,7 @@ class MAP_ESTIMATION(object):
 
                             # PnP-Flow
                             # t_k = iteration / steps
-                            # sigma_k = (1 - t_k) / t_k
+                            # sigma_k = (1 - t_k) / t_k if iteration > 0 else self.args.sigma_noise
                             # alpha_k = (1 - t_k + 1/steps) ** self.args.alpha
 
                             # MMSE Average
@@ -152,13 +183,28 @@ class MAP_ESTIMATION(object):
                             # t_k = 1 / (1 + sigma_k)
 
                             # New Method
-                            sigma_k = self.get_sigma_schedule(iteration)
-                            alpha_k = sigma_k ** 2 / (self.args.sigma_noise ** 2 + sigma_k ** 2)
+
+                            # w = np.exp(-k/2)
+                            # tau = (10.0) * w
+                            # tau = 1.0 / (k + 1) ** (1.5)
+                            sigma_k = self.get_sigma_schedule(iteration, steps, step_size=tau)
+                            alpha_k = sigma_k ** 2 / (tau + sigma_k ** 2)
                             t_k = 1 / (1 + sigma_k)
+                            # print(f'{t_k:.6f}, {sigma_k:.6f}, {alpha_k:.6f}')
 
                             t1 = torch.ones(len(x), device=self.device) * t_k
                             
                             x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x_ref
+                            # if self.args.save_results:
+                            #     restored_img = x.detach().clone()
+                            #     utils.compute_psnr(clean_img, noisy_img,
+                            #                     restored_img, self.args, H_adj, iter=iteration)
+                            #     utils.compute_ssim(
+                            #         clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                            #     if False:
+                            #         utils.save_images(clean_img, noisy_img, restored_img,
+                            #             self.args, H_adj, iter=iteration)
+
                     else:
                         sigma_k = np.sqrt(tau / (k + 2))
                         alpha_k = 1 / (k + 3)
@@ -167,16 +213,17 @@ class MAP_ESTIMATION(object):
 
                         x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x_ref
 
-                    if self.args.save_results and k % 10 == 0:
+                    if self.args.save_results:
                         restored_img = x.detach().clone()
-                        utils.save_images(clean_img, noisy_img, restored_img,
-                                    self.args, H_adj, iter=k)
+                        if self.should_save_image(k, max_iter):
+                            utils.save_images(clean_img, noisy_img, restored_img,
+                                        self.args, H_adj, iter=k)
                         utils.compute_psnr(clean_img, noisy_img,
                                                 restored_img, self.args, H_adj, iter=k)
                         utils.compute_ssim(
                                     clean_img, noisy_img, restored_img, self.args, H_adj, iter=k)
-                        utils.compute_lpips(clean_img, noisy_img,
-                                                    restored_img, self.args, H_adj, iter=k)
+                        # utils.compute_lpips(clean_img, noisy_img,
+                        #                             restored_img, self.args, H_adj, iter=k)
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
