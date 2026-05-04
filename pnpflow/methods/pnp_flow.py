@@ -35,11 +35,32 @@ class PNP_FLOW(object):
         }
         return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
 
-    def get_sigma_schedule(self, k, step_size):
-        c = step_size / 2
-        alpha = self.args.alpha
-        # print(c * ((1 + 1 / (k + 1) ** alpha) - 1))
-        return np.sqrt(c * ((1 + 1 / (k + 1) ** alpha) - 1))
+    def get_time_schedule(self, k, N):
+        alpha = 6.0
+        l = 0.99
+
+        # t = (k/N) ** alpha
+
+        # t = 1 - l ** k
+
+        t = k ** alpha / (k ** alpha + (N - k) ** alpha) 
+        
+        return t
+
+    def get_sigma_schedule(self, t):
+        if t == 0:
+            return torch.inf
+        else:
+            return (1 - t) / t
+
+    def get_alpha_schedule(self, t, sigma_noise):
+        return (1 - t)**2 / ((sigma_noise * t) ** 2 + (1 - t)**2)
+
+    def get_schedule(self, k, N, sigma_noise):
+        t = self.get_time_schedule(k, N)
+        sigma = self.get_sigma_schedule(t)
+        alpha = self.get_alpha_schedule(t, sigma_noise)
+        return t, sigma, alpha
 
     def grad_datafit(self, x, y, H, H_adj):
         if self.args.noise_type == 'gaussian':
@@ -161,26 +182,19 @@ class PNP_FLOW(object):
                 for count, iteration in enumerate(range(int(steps))):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
-                    # print(iteration)
                     t1 = torch.ones(
                         len(x), device=self.device) * delta * iteration
+                    
                     if self.args.denoise_mode == 'gd':
                         lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
 
+                        # New step_size/scheduling choice
                         t = delta * iteration
-                        # if t > 0:
-                        #     alpha = 10.0
-                        #     sigma_k = ((1 - t) / t) ** (alpha)
-                        #     t = 1 / (1 + sigma_k)
-                        #     lr_t = sigma_k ** 2 / (self.args.sigma_noise ** 2 + sigma_k ** 2)
-                        #     print(f'{iteration:.1f}, {t:.4f}, {sigma_k:.4f}, {lr_t:.4f}')
-                        # else:
-                        #     sigma_k = torch.inf
-                        #     lr_t = 1.0
-                        #     t = 0.0
-                        # sigma_k = self.get_sigma_schedule(iteration, step_size=10000 * self.args.sigma_noise ** 2)
+                        t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
+                        print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
+                        lr_t = alpha
+
                         t1 = t * torch.ones(len(x), device=self.device)
-                        # print(1/(1 + sigma_k), lr_t)
                     else:
                         lr_t = 1.0
                     
@@ -211,8 +225,8 @@ class PNP_FLOW(object):
 
                     if self.args.save_results:
                         restored_img = x.detach().clone()
-                        utils.save_images(
-                            clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                        # utils.save_images(
+                        #     clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
                         if iteration % 1 == 0 or self.should_save_image(iteration, steps):
                             utils.compute_psnr(clean_img, noisy_img,
                                                restored_img, self.args, H_adj, iter=iteration)

@@ -7,7 +7,7 @@ import pnpflow.image_generation.models.utils as mutils
 import pnpflow.utils as utils
 
 
-class MAP_ESTIMATION(object):
+class APPROX_PGD(object):
 
     def __init__(self, model, device, args):
         self.device = device
@@ -40,35 +40,37 @@ class MAP_ESTIMATION(object):
             return int(self.args.base_steps_pnp * (k + 1) ** (1.0 + eta))
         else:
             return self.args.base_steps_pnp
-    
-    def get_sigma_schedule(self, k, N, step_size):
-        # return np.sqrt(step_size / (k + 1))
-        c = step_size
-        alpha = self.args.alpha
-        alpha = 10.0
-        beta = 0.0
-        # f = lambda k: k ** alpha * np.log(k + 1) ** beta
-        # f = lambda k: np.log(k + 1) ** beta #* k ** 0.01 
-        # return np.sqrt(c * (f(k + 2) / f(k + 1) - 1))
-        # return np.sqrt(c / ((k + 1) ** alpha * np.log(k + 2) ** 4.0))
-        # nu = (f(k + 2) / f(k + 1) - 1) / 2
-        # if k < N:
-        #     nu = (1 - (k + 1) / N) ** alpha / (1 - (1 - (k + 1)/N) ** alpha)
-        # else:
-        #     nu = 0.0
-        t = (k + 1) / N
-        # t = (np.exp(alpha * (k + 1) / N) - 1) / (np.exp(alpha) - 1)
-        # t = (1 + np.cos(np.pi * (N - k - 1) / N)) / 2
-        # t = ((k + 1) / N) ** alpha
-        # l = 1e-5
-        # t = 1 - (l) ** ((k + 1) / N)
-        return ((1 - t) / t) ** (alpha)
-        # nu = 1e-4 / (k + 1) + 1 / (k + 1) ** 3.0
-        # return np.sqrt(c * nu)
 
-    def grad_datafit(self, x, y, H, H_adj):
+    def get_time_schedule(self, k, N):
+        alpha = 3.0
+        l = 0.7
+
+        t = (k/N) ** alpha
+
+        # t = 1 - l ** k
+
+        # t = k ** alpha / (k ** alpha + (N - k) ** alpha) 
+        
+        return t
+
+    def get_sigma_schedule(self, t):
+        if t == 0:
+            return torch.inf
+        else:
+            return (1 - t) / t
+
+    def get_alpha_schedule(self, t, sigma_noise):
+        return (1 - t)**2 / ((sigma_noise * t) ** 2 + (1 - t)**2)
+
+    def get_schedule(self, k, N, sigma_noise):
+        t = self.get_time_schedule(k, N)
+        sigma = self.get_sigma_schedule(t)
+        alpha = self.get_alpha_schedule(t, sigma_noise)
+        return t, sigma, alpha
+
+    def grad_datafit(self, x, y, H, H_adj, l=0.0):
         if self.args.noise_type == 'gaussian':
-            return H_adj(H(x) - y) #/ (self.args.sigma_noise**2)
+            return H_adj(H(x) - y) + l * x #/ (self.args.sigma_noise**2)
         elif self.args.noise_type == 'laplace':
             return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1)#/self.args.sigma_noise
         else:
@@ -92,6 +94,7 @@ class MAP_ESTIMATION(object):
         return x + (1 - t.view(-1, 1, 1, 1)) * v
 
     def mmse(self, x, t, num_samples=5):
+        # TODO: parametrize num_samples
         out = torch.zeros_like(x)
         tt = t.view(-1, 1, 1, 1)
         for _ in range(num_samples):
@@ -148,22 +151,14 @@ class MAP_ESTIMATION(object):
                         time_counter_1 = perf_counter()
 
                     # tau scheduling
-                    # sigma_max = 1
-                    # r_k = (k + 1) ** 2
-                    # tau = sigma_max ** 2 / r_k
-                    # lmbda = r_k ** (1/2) / sigma_max ** 2
-                    tau_0 = 2.0
-                    rho = 0.90
-                    tau = tau_0 * rho ** k
-                    # lmbda = min(1.0 / tau, tau/sigma_noise)
-                    lmbda = 1/(tau) * 1/(k + 1) ** (0.1)
+                    # tau_0 = 2.0
+                    # rho = 0.90
+                    # tau = tau_0 * rho ** k
+                    # lmbda = 1/(tau)
                     print(f'{k}, {tau:.6f}, {lmbda * tau:.6f}')
 
-                    x = x - lmbda * tau * self.grad_datafit(x, noisy_img, H, H_adj)
+                    x = x - lmbda * tau * self.grad_datafit(x, noisy_img, H, H_adj, 0)
 
-                    # if k % 1 == 0: 
-                    #     utils.save_images(clean_img, noisy_img, x.clone(),
-                    #         self.args, H_adj, iter=f'_grad_{k}')
 
                     x_ref = x.clone()
                     steps = self.inner_steps(k, eta)
@@ -172,38 +167,21 @@ class MAP_ESTIMATION(object):
                             if self.args.compute_time:
                                 time_counter_1 = perf_counter()
 
-                            # PnP-Flow
-                            # t_k = iteration / steps
-                            # sigma_k = (1 - t_k) / t_k if iteration > 0 else self.args.sigma_noise
-                            # alpha_k = (1 - t_k + 1/steps) ** self.args.alpha
+                            t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
+                            print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
 
-                            # MMSE Average
-                            # sigma_k = np.sqrt(tau / (iteration + 2))
-                            # alpha_k = 1 / (iteration + 3)
-                            # t_k = 1 / (1 + sigma_k)
-
-                            # New Method
-
-                            # w = np.exp(-k/2)
-                            # tau = (10.0) * w
-                            # tau = 1.0 / (k + 1) ** (1.5)
-                            sigma_k = self.get_sigma_schedule(iteration, steps, step_size=tau)
-                            alpha_k = sigma_k ** 2 / (tau + sigma_k ** 2)
-                            t_k = 1 / (1 + sigma_k)
-                            # print(f'{t_k:.6f}, {sigma_k:.6f}, {alpha_k:.6f}')
-
-                            t1 = torch.ones(len(x), device=self.device) * t_k
+                            t1 = torch.ones(len(x), device=self.device) * t
                             
-                            x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x_ref
-                            # if self.args.save_results:
-                            #     restored_img = x.detach().clone()
-                            #     utils.compute_psnr(clean_img, noisy_img,
-                            #                     restored_img, self.args, H_adj, iter=iteration)
-                            #     utils.compute_ssim(
-                            #         clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-                            #     if False:
-                            #         utils.save_images(clean_img, noisy_img, restored_img,
-                            #             self.args, H_adj, iter=iteration)
+                            x = (1 - alpha) * self.mmse(x, t1) + alpha * x_ref
+                            if self.args.save_results:
+                                restored_img = x.detach().clone()
+                                utils.compute_psnr(clean_img, noisy_img,
+                                                restored_img, self.args, H_adj, iter=iteration)
+                                utils.compute_ssim(
+                                    clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                                if self.should_save_image(iteration, steps):
+                                    utils.save_images(clean_img, noisy_img, restored_img,
+                                            self.args, H_adj, iter=iteration)
 
                     else:
                         sigma_k = np.sqrt(tau / (k + 2))
@@ -215,7 +193,7 @@ class MAP_ESTIMATION(object):
 
                     if self.args.save_results:
                         restored_img = x.detach().clone()
-                        if self.should_save_image(k, max_iter):
+                        if max_iter >= 10 and self.should_save_image(k, max_iter):
                             utils.save_images(clean_img, noisy_img, restored_img,
                                         self.args, H_adj, iter=k)
                         utils.compute_psnr(clean_img, noisy_img,

@@ -20,7 +20,7 @@ from pnpflow.methods.pnp_diff import PNP_DIFF
 from pnpflow.methods.base_denoiser import BASE_DENOISER
 from pnpflow.methods.fig import FIG
 from pnpflow.methods.oc_flow import OC_FLOW
-from pnpflow.methods.map_estimation import MAP_ESTIMATION
+from pnpflow.methods.approx_pgd import APPROX_PGD
 from pnpflow.methods.pnp_flow_grad import PNP_FLOW_GRAD
 from pnpflow.methods.sampling_pnp_flow import SAMPLING_PNP_FLOW
 from pnpflow.utils import gaussian_blur, define_model, load_model
@@ -134,7 +134,7 @@ def main():
             if args.noise_type == 'laplace':
                 sigma_noise = 0.3
             elif args.noise_type == 'gaussian':
-                sigma_noise = 0.2 #! CHANGE back to 0.05
+                sigma_noise = 0.05
             if args.dim_image == 128:
                 half_size_mask = 20
             elif args.dim_image == 256:
@@ -220,8 +220,8 @@ def main():
             method = FIG(model, device, args)
         elif args.method == 'oc_flow':
             method = OC_FLOW(model, device, args)
-        elif args.method == 'map_estimation':
-            method = MAP_ESTIMATION(model, device, args)
+        elif args.method == 'approx_pgd':
+            method = APPROX_PGD(model, device, args)
         elif args.method == 'sampling_pnp_flow':
             method = SAMPLING_PNP_FLOW(model, device, args)
         else:

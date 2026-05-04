@@ -642,7 +642,7 @@ def compute_average_psnr(args):
                 last_iteration = None
                 for line in list(f)[::-1]:
                     iteration, psnr = map(float, line.strip().split())
-                    if last_iteration is not None and int(iteration) > last_iteration:
+                    if last_iteration is not None and int(iteration) >= last_iteration:
                         break
                     else:
                         last_iteration = int(iteration)
@@ -748,7 +748,7 @@ def compute_average_lpips(args):
                 last_iteration = None
                 for line in list(f)[::-1]:
                     iteration, lpips = map(float, line.strip().split())
-                    if last_iteration is not None and int(iteration) > last_iteration:
+                    if last_iteration is not None and int(iteration) >= last_iteration:
                         break
                     else:
                         last_iteration = int(iteration)
@@ -845,7 +845,7 @@ def compute_average_ssim(args):
                 last_iteration = None
                 for line in list(f)[::-1]:
                     iteration, ssim = map(float, line.strip().split())
-                    if last_iteration is not None and int(iteration) > last_iteration:
+                    if last_iteration is not None and int(iteration) >= last_iteration:
                         break
                     else:
                         last_iteration = int(iteration)
