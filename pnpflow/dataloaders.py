@@ -30,7 +30,7 @@ class DataLoaders:
                 v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
             ])
             # Paths
-            img_dir = './data/celeba/img_align_celeba/'
+            img_dir = './data/celeba/img_align_celeba/img_align_celeba/'
             partition_csv = './data/celeba/list_eval_partition.csv'
 
             # Datasets

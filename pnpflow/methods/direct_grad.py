@@ -7,7 +7,7 @@ import pnpflow.image_generation.models.utils as mutils
 import pnpflow.utils as utils
 
 
-class PNP_FLOW_GRAD(object):
+class DIRECT_GRAD(object):
 
     def __init__(self, model, device, args):
         self.device = device
@@ -34,35 +34,6 @@ class PNP_FLOW_GRAD(object):
             'alpha_1_minus_t': lambda lr, t: lr * (1 - t)**self.args.alpha
         }
         return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
-
-    def get_time_schedule(self, k, N):
-        beta = 1.0
-        l = 0.7
-
-        t = (k/N) ** beta
-
-        # t = 1 - l ** k
-
-        # t = k ** beta / (k ** beta + (N - k) ** beta) 
-        
-        return t
-
-    def get_sigma_schedule(self, t):
-        if t == 0:
-            return torch.inf
-        else:
-            return (1 - t) / t
-
-    def get_alpha_schedule(self, t, s_min, s_max=20.0):
-        # Classic choice
-        tau = s_min ** 2
-        return (1 - t)**2 / (tau * t ** 2 + (1 - t) ** 2)
-
-    def get_schedule(self, k, N, sigma_noise):
-        t = self.get_time_schedule(k, N)
-        sigma = self.get_sigma_schedule(t)
-        alpha = self.get_alpha_schedule(t, sigma_noise)
-        return t, sigma, alpha
 
     def grad_datafit(self, x, y, H, H_adj, l=0.0, x_ref=0.0):
         if self.args.noise_type == 'gaussian':
@@ -104,16 +75,6 @@ class PNP_FLOW_GRAD(object):
         self.num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
         steps, delta = self.args.steps_pnp, 1 / self.args.steps_pnp
 
-        # if self.args.noise_type == 'gaussian':
-        #     self.args.lr_pnp = sigma_noise**2 * self.args.lr_pnp
-        #     lr = self.args.lr_pnp
-
-        # elif self.args.noise_type == 'laplace':
-        #     self.args.lr_pnp = sigma_noise * self.args.lr_pnp
-        #     lr = self.args.lr_pnp
-        # else:
-        #     raise ValueError('Noise type not supported')
-
         loader = iter(test_loader)
         for batch in range(self.args.max_batch):
 
@@ -138,9 +99,9 @@ class PNP_FLOW_GRAD(object):
 
             # intialize the image with the adjoint operator
             x = torch.randn_like(clean_img).to(self.device)
-            y_dagger = H_adj(noisy_img).to(self.device)
-            u = x.clone()
-            x_pred = u
+            with torch.no_grad():
+                u = self.mmse(H_adj(noisy_img).to(self.device), torch.ones(len(x), device=self.device) * (1 / (1 + sigma_noise)))
+            tau = sigma_noise ** 2
 
             if self.args.compute_time:
                 torch.cuda.synchronize()
@@ -154,25 +115,23 @@ class PNP_FLOW_GRAD(object):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
-                    t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
-                    lmbda = 1 / (iteration + 1) ** 1.0
+                    k = iteration + 1
+                    N = steps + 1
+                    sigma = ((N - k) / k)
+                    alpha = sigma ** 2 / (sigma ** 2 + tau)
+                    lmbda = sigma / N
+                    t = 1 / (1 + sigma)
+
+                    print(f'{sigma:.5f}, {alpha:.5f}, {lmbda:.5f}')
 
                     t1 = torch.ones(len(x), device=self.device) * t
 
-
-                    tmp = x.clone()
-                    beta = 0.0
-                    # x = (1 + beta) * x - beta * x_pred
-                    grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=y_dagger)
-                    mmse = self.mmse(x, t1, beta * x_pred)
-                    # Generalised-MMSE-Average
-                    # x = alpha * (x - grad_x) + (1 - alpha) * self.mmse(x + (1 - t)/t * x_pred, t1)
-                    # PnP-Flow-Grad
-                    x = mmse - alpha * grad_x
+                    grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=0)
+                    mmse = self.mmse(x, t1)
                     # Direct-Grad
-                    # x = (1 - alpha * (tau / sigma**2 + lmbda)) * x - alpha * grad_x + alpha * tau / sigma ** 2 * mmse
+                    # x = (1 - alpha * tau / (sigma ** 2)) * x - alpha * grad_x + alpha * tau / (sigma ** 2) * mmse
+                    x = mmse - alpha * grad_x
 
-                    x_pred = tmp
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()

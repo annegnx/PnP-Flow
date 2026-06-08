@@ -23,6 +23,7 @@ from pnpflow.methods.oc_flow import OC_FLOW
 from pnpflow.methods.approx_pgd import APPROX_PGD
 from pnpflow.methods.pnp_flow_grad import PNP_FLOW_GRAD
 from pnpflow.methods.sampling_pnp_flow import SAMPLING_PNP_FLOW
+from pnpflow.methods.direct_grad import DIRECT_GRAD
 from pnpflow.utils import gaussian_blur, define_model, load_model
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib\\..*")
@@ -224,6 +225,8 @@ def main():
             method = APPROX_PGD(model, device, args)
         elif args.method == 'sampling_pnp_flow':
             method = SAMPLING_PNP_FLOW(model, device, args)
+        elif args.method == 'direct_grad':
+            method = DIRECT_GRAD(model, device, args)
         else:
             raise ValueError("The method your entered does not exist")
 
