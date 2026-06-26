@@ -5,5 +5,6 @@ METHOD:
     num_samples: 5
     alpha: 0.01
     interpolation_mode: 'random'
-    datafit_mode: 'gd' # 'gd' for gd step on datafit 'prox' for prox step
-    denoise_mode: 'gd' # 'gd' for PnP-Flow 'prox' for Approx-PGD 
+    lmbda_0: 1.0
+    kappa: 1.0
+    pexp: 1.1

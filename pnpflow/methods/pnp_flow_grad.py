@@ -7,7 +7,7 @@ import pnpflow.image_generation.models.utils as mutils
 import pnpflow.utils as utils
 
 
-class PNP_FLOW(object):
+class PNP_FLOW_GRAD(object):
 
     def __init__(self, model, device, args):
         self.device = device
@@ -31,19 +31,19 @@ class PNP_FLOW(object):
             '1_minus_t': lambda lr, t: lr * (1 - t),
             'sqrt_1_minus_t': lambda lr, t: lr * torch.sqrt(1 - t),
             'constant': lambda lr, t: lr,
-            'alpha_1_minus_t': lambda lr, t: lr * (1 - t)**self.args.alpha,
+            'alpha_1_minus_t': lambda lr, t: lr * (1 - t)**self.args.alpha
         }
         return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
 
     def get_time_schedule(self, k, N):
-        alpha = 1.0
+        beta = 1.0
 
-        t = (k/N) ** alpha
+        t = (k/N) ** beta
 
         # t = 1 - l ** k
 
-        # t = k ** alpha / (k ** alpha + (N - k) ** alpha) 
-        
+        # t = k ** beta / (k ** beta + (N - k) ** beta)
+
         return t
 
     def get_sigma_schedule(self, t):
@@ -52,9 +52,11 @@ class PNP_FLOW(object):
         else:
             return (1 - t) / t
 
-    def get_alpha_schedule(self, t, sigma_noise):
+    def get_alpha_schedule(self, t, s_min, s_max=20.0):
+        # Classic choice
+        tau = s_min ** 2
         beta = 1.0
-        return (1 - t)**2 / ((sigma_noise * t) ** 2 + beta * (1 - t)**2)
+        return (1 - t)**2 / (tau * t ** 2 + beta * (1 - t) ** 2)
 
     def get_schedule(self, k, N, sigma_noise):
         t = self.get_time_schedule(k, N)
@@ -62,25 +64,15 @@ class PNP_FLOW(object):
         alpha = self.get_alpha_schedule(t, sigma_noise)
         return t, sigma, alpha
 
-    def grad_datafit(self, x, y, H, H_adj):
+    def grad_datafit(self, x, y, H, H_adj, l=0.0, x_ref=0.0):
         if self.args.noise_type == 'gaussian':
-            return H_adj(H(x) - y) #/ (self.args.sigma_noise**2)
+            return H_adj(H(x) - y) + l * (x - x_ref) #/ (self.args.sigma_noise**2)
         elif self.args.noise_type == 'laplace':
-            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1)#/self.args.sigma_noise
+            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1) + l*x#/self.args.sigma_noise
         else:
             raise ValueError('Noise type not supported')
 
-    def prox_datafit(self, x, y, H, H_adj, step_size, lr=1.0, n_iter=50):
-        z = x.clone()
-        for i in range(n_iter):
-            grad = (z - x) + step_size * self.grad_datafit(z, y, H, H_adj)
-            lr_i = lr / (i + 1)
-            
-            z = (z - lr_i * grad)
-            # print(i, grad.pow(2).mean(0).sum().sqrt().item())
-        return z
-
-    def interpolation_step(self, x, t, eps=None):
+    def interpolation_step(self, x, t, eps=0):
         sigma_sample = 1.0
         if self.args.interpolation_mode == 'random':
             eps = torch.randn_like(x) * sigma_sample
@@ -97,38 +89,21 @@ class PNP_FLOW(object):
     def denoiser(self, x, t):
         v = self.model_forward(x, t)
         return x + (1 - t.view(-1, 1, 1, 1)) * v
-    
-    def solve_prox(self, x, num_steps=100, step_size=1.0):
-        delta = 1 / num_steps
-        num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
 
-        # TODO: fix alpha_k and sigma_k so that we compute prox_{-step_size * log p}
-        x_ref = x.clone()
-        with torch.no_grad():
-            for iteration in range(int(num_steps)):
-                t = delta * iteration
-                lr_t = (1 - t) ** (0.2)
-                t1 = torch.ones(
-                    len(x), device=self.device) * t
-                
-                x = x - lr_t * (x - x_ref)
-
-                x_new = torch.zeros_like(x)
-                for _ in range(num_samples):
-                    z_tilde, _ = self.interpolation_step(
-                        x, t1.view(-1, 1, 1, 1))
-                    x_new += self.denoiser(z_tilde, t1)
-                x_new /= num_samples
-                x = x_new
-        
-        return x
+    def mmse(self, x, t, eps=0):
+        out = torch.zeros_like(x)
+        for _ in range(self.args.num_samples):
+            x_tilde, _ = self.interpolation_step(x, t.view(-1, 1, 1, 1), eps=eps)
+            out += self.denoiser(x_tilde, t)
+        return out / self.args.num_samples
 
     def solve_ip(self, test_loader, degradation, sigma_noise, H_funcs=None):
         H = degradation.H
         H_adj = degradation.H_adj
         self.args.sigma_noise = sigma_noise
-        num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
+        self.num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
         steps, delta = self.args.steps_pnp, 1 / self.args.steps_pnp
+
         # if self.args.noise_type == 'gaussian':
         #     self.args.lr_pnp = sigma_noise**2 * self.args.lr_pnp
         #     lr = self.args.lr_pnp
@@ -162,14 +137,14 @@ class PNP_FLOW(object):
                 self.device), clean_img.to('cpu')
 
             # intialize the image with the adjoint operator
-            # x = H_adj(torch.ones_like(noisy_img)).to(self.device)
+            # x = H_adj(noisy_img).to(self.device)
             x = torch.randn_like(clean_img).to(self.device)
-            # x = H_adj(noisy_img)
 
-            # specific seed for fixed interpolation noise
-            gen = torch.Generator(device="cpu")
-            gen.manual_seed(0)
-            eps = torch.randn_like(x)
+            # y_dagger = H_adj(noisy_img).to(self.device)
+            n = torch.randn_like(clean_img).to(self.device)
+            y_dagger = n
+
+            # x_pred = x.clone()
 
             if self.args.compute_time:
                 torch.cuda.synchronize()
@@ -182,51 +157,58 @@ class PNP_FLOW(object):
                 for count, iteration in enumerate(range(int(steps))):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
-                    t = delta * iteration
-                    t1 = torch.ones(
-                        len(x), device=self.device) * t
-                    
-                    if self.args.denoise_mode == 'gd':
-                        lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
-                    else:
-                        lr_t = 1.0
-                    
-                    if self.args.datafit_mode == 'prox':
-                        z = self.prox_datafit(x, noisy_img, H, H_adj, step_size=4 * lr_t)
-                    elif self.args.datafit_mode == 'gd':
-                        z = x - lr_t * \
-                            self.grad_datafit(x, noisy_img, H, H_adj)
 
-                    if self.args.denoise_mode == 'gd':
-                        x_new = torch.zeros_like(x)
-                        for _ in range(num_samples):
-                            z_tilde, _ = self.interpolation_step(
-                                z, t1.view(-1, 1, 1, 1), eps=eps)
-        
-                            x_new += self.denoiser(z_tilde, t1)
+                    # t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
+                    # lmbda = 1 / (int(steps)) ** 0.25
+                    # print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
 
-                        x_new /= num_samples
-                        x = x_new
-                    elif self.args.denoise_mode == 'prox':
-                        num_steps = int(1 + (iteration + 1) / 2)
-                        x = self.solve_prox(z, num_steps=num_steps, step_size=lr_t)
-                    
+                    k = iteration + 1
+                    N = steps + 1
+
+                    lmbda_0 = self.args.lmbda_0
+                    kappa = self.args.kappa
+                    p = self.args.pexp
+
+                    gamma = p/2
+                    tau = sigma_noise ** 2
+                    sigma = ((N - k) / k) ** (1.0)
+                    alpha = sigma ** 2 / (tau + sigma ** 2 + kappa * sigma ** p)
+                    lmbda = lmbda_0 / k ** gamma
+                    t = 1 / (1 + sigma)
+
+                    # t, sigma, alpha = self.get_schedule(iteration, steps, sigma_noise)
+                    # lmbda = 0
+
+                    # print(f'{sigma:.5f}, {alpha:.5f}, {lmbda:.5f}')
+                    # rho = alpha * (L_f + (1 - alpha) / alpha + lmbda)
+                    # print('checking step_size validity...', rho < 2, rho)
+
+                    t1 = torch.ones(len(x), device=self.device) * t
+
+                    # tmp = x.clone()
+                    grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=y_dagger)
+                    mmse = self.mmse(x, t1)
+                    # Generalised-MMSE-Average
+                    x = alpha * (x - grad_x) + (1 - alpha) * mmse
+                    # PnP-Flow-Grad
+                    # x = mmse - alpha * grad_x
+
+                    # x_pred = tmp
+
                     if self.args.compute_time:
                         torch.cuda.synchronize()
                         time_counter_2 = perf_counter()
                         time_per_batch += time_counter_2 - time_counter_1
 
-                    # if self.args.save_results:
-                    #     restored_img = x.detach().clone()
-                    #     utils.compute_psnr(clean_img, noisy_img,
-                    #                        restored_img, self.args, H_adj, iter=iteration)
-                    #     utils.compute_ssim(
-                    #         clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-                    #     # utils.compute_lpips(clean_img, noisy_img,
-                    #     #                     restored_img, self.args, H_adj, iter=iteration)
-                    #     if self.should_save_image(iteration, steps):
-                    #         utils.save_images(
-                    #             clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                    if False and self.args.save_results: #!! change this after hyperparam search
+                        restored_img = x.detach().clone()
+                        utils.compute_psnr(clean_img, noisy_img,
+                                       restored_img, self.args, H_adj, iter=iteration)
+                        utils.compute_ssim(
+                                    clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                        if self.should_save_image(iteration, int(steps)):
+                            utils.save_images(
+                                        clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
 
             if self.args.compute_memory:
                 dict_memory = {}
@@ -262,7 +244,7 @@ class PNP_FLOW(object):
             utils.compute_average_time(self.args)
 
     def should_save_image(self, iteration, steps):
-        return iteration % (steps // 10) == 0
+        return (steps >= 10) and iteration % (steps // 10) == 0
 
     def run_method(self, data_loaders, degradation, sigma_noise, H_funcs=None):
 

@@ -221,6 +221,66 @@ class GRADIENT_STEP_DENOISER(object):
                     file.write(
                         f'Epoch: {ep}, Loss: {loss.item()}, PSNR: {psnr.item()}\n')
 
+    def train_generative_denoiser(self, train_loader, opt, num_epoch):
+        tq = tqdm(range(num_epoch), desc='loss')
+        for ep in tq:
+            for iteration, (y, labels) in enumerate(train_loader):
+
+                if y.size(0) == 0:
+                    continue
+                y = y.to(self.device)
+
+                t = random.uniform(0, 1) * torch.ones(len(y), device=self.device)
+                t = t.view(-1, 1, 1, 1)
+                eps = torch.randn_like(y)
+                x = (1 - t) * eps + t * y
+
+                # Here we just learn a denoiser with w_den = 1
+                x_hat, Dg = self.forward(x, t.squeeze())
+                self.psnr.update(x_hat, y)
+
+                criterion = nn.MSELoss(reduction='none')
+                loss = criterion(
+                    x_hat.view(x.size()[0], -1), y.view(y.size()[0], -1)).mean(dim=1)
+
+                if self.jacobian_loss_weight > 0:
+                    jacobian_norm = self.jacobian_spectral_norm(
+                        x, x_hat, sigma, interpolation=False, training=True)
+                    if self.jacobian_loss_type == 'max':
+                        jacobian_loss = torch.maximum(jacobian_norm, torch.ones_like(
+                            jacobian_norm)-self.eps_jacobian_loss)
+                    elif self.jacobian_loss_type == 'exp':
+                        jacobian_loss = self.eps_jacobian_loss * torch.exp(jacobian_norm - torch.ones_like(
+                            jacobian_norm)*(1+self.eps_jacobian_loss)) / self.eps_jacobian_loss
+                    else:
+                        print("jacobian loss not available")
+                    jacobian_loss = torch.clip(jacobian_loss, 0, 1e3)
+                    loss = (
+                        loss + self.jacobian_loss_weight * jacobian_loss)
+
+                loss = loss.mean()
+                psnr = self.psnr.compute()
+
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+
+                # save loss in txt file
+                with open(self.save_path + 'loss_training.txt', 'a') as file:
+                    file.write(
+                        f'Epoch: {ep}, iter: {iteration}, Loss: {loss.item()}\n')
+
+            if ep % 1 == 0:
+
+                torch.save({
+                    'model_state_dict': self.model.state_dict(),
+                    'optimizer_state_dict': opt.state_dict(),
+                }, self.model_path + 'gradient_step_denoiser_{}.pt'.format(ep))
+
+                with open(self.save_path + 'losses_gradient_step.txt', 'a') as file:
+                    file.write(
+                        f'Epoch: {ep}, Loss: {loss.item()}, PSNR: {psnr.item()}\n')
+
     def train(self, data_loaders):
 
         self.save_path = self.args.root + \
@@ -251,6 +311,10 @@ class GRADIENT_STEP_DENOISER(object):
             file.write(f'Learning rate: {self.lr}\n')
 
         [opt], [scheduler] = self.configure_optimizers()
-        self.train_denoiser(train_loader, opt, num_epoch=self.args.num_epoch)
+
+        if self.args.generative_training:
+            self.train_generative_denoiser(train_loader, opt, num_epoch=self.args.num_epoch)
+        else:
+            self.train_denoiser(train_loader, opt, num_epoch=self.args.num_epoch)
         torch.save(self.model.state_dict(),
                    self.model_path + 'gradient_step_denoiser_final.pt')

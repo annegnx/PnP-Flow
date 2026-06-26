@@ -30,7 +30,7 @@ class DataLoaders:
                 v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
             ])
             # Paths
-            img_dir = './data/celeba/img_align_celeba/'
+            img_dir = './data/celeba/img_align_celeba/img_align_celeba/'
             partition_csv = './data/celeba/list_eval_partition.csv'
 
             # Datasets
@@ -49,12 +49,12 @@ class DataLoaders:
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
             test_loader = DataLoader(
                 test_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
 
         elif self.dataset_name == 'celebahq':
@@ -72,7 +72,7 @@ class DataLoaders:
             test_loader = DataLoader(
                 test_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
 
         elif self.dataset_name == 'afhq_cat':
@@ -84,9 +84,9 @@ class DataLoaders:
             ])
 
             # transform = False
-            img_dir_test = '.data/afhq_cat/test/cat/'
-            img_dir_val = '.data/afhq_cat/val/cat/'
-            img_dir_train = '.data/afhq_cat/train/cat/'
+            img_dir_test = 'data/afhq_cat/val/cat/'
+            img_dir_val = 'data/afhq_cat/val/cat/'
+            img_dir_train = 'data/afhq_cat/train/cat/'
             test_dataset = AFHQDataset(
                 img_dir_test, batchsize=self.batch_size_test, transform=transform)
             val_dataset = AFHQDataset(
@@ -106,7 +106,7 @@ class DataLoaders:
             train_loader = DataLoader(
                 train_dataset,
                 batch_size=self.batch_size_train,
-                shuffle=True,
+                shuffle=False,
                 collate_fn=custom_collate, drop_last=True)
 
         else:

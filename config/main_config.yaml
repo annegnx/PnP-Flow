@@ -1,19 +1,20 @@
 EVAL:
     dataset: 'afhq_cat'                # dataset name (mnist, celeba, celeba_hq, afhq_cat)
-    model: 'ot'             #model (ot, rectified)
+    model: 'ot'             #model (ot, rectified, gradient_step, diffusion)
     root: './'                      # root directory for the experiment
     seed: 0                         # random seed
     batch_size_train: 16               # batch size for training
     num_epoch: 100                  # number of epochs for training
     lr: 0.0001                      # learning rate for training
     train: False                    # train the flow model if True
+    generative_training: True       # only used when train = True and model = 'gradient_step'
     lipschitz_constraint: None     # soft constraint on the spectral norm of the Jacobian
     finetune: False                 # finetuning of the model
     eval: True                      # evaluate the flow model if True
     eval_split: 'test'               # data used for evaluation (val, test)
     compute_metrics: False           # compute scores (FID, SW, Vendi) if True
     compute_lipschitz: False
-    problem: 'superresolution'      # inverse problem type (superresolution, inpainting, denoising)
+    problem: 'inpainting'      # inverse problem type (superresolution, inpainting, denoising)
     method: 'pnp_flow'              # method for solving inverse problem (pnp_flow, map_gd, d_flow)
     max_batch: 1               # number of batches of size 4 for evaluation
     batch_size_ip : 4

@@ -17,6 +17,12 @@ from pnpflow.methods.ot_ode import OT_ODE
 from pnpflow.methods.flow_priors import FLOW_PRIORS
 from pnpflow.methods.pnp_gs import PROX_PNP
 from pnpflow.methods.pnp_diff import PNP_DIFF
+from pnpflow.methods.fig import FIG
+from pnpflow.methods.oc_flow import OC_FLOW
+from pnpflow.methods.approx_pgd import APPROX_PGD
+from pnpflow.methods.pnp_flow_grad import PNP_FLOW_GRAD
+from pnpflow.methods.sampling_pnp_flow import SAMPLING_PNP_FLOW
+from pnpflow.methods.mmse_average import MMSE_AVERAGE
 from pnpflow.utils import gaussian_blur, define_model, load_model
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib\\..*")
@@ -60,6 +66,7 @@ def main():
     args = parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("device", device)
+    print("seed", args.seed)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -206,6 +213,18 @@ def main():
             method = PROX_PNP(generative_method, device, args)
         elif args.method == 'pnp_diff':
             method = PNP_DIFF(model, device, args)
+        elif args.method == 'pnp_flow_grad':
+            method = PNP_FLOW_GRAD(model, device, args)
+        elif args.method == 'fig':
+            method = FIG(model, device, args)
+        elif args.method == 'oc_flow':
+            method = OC_FLOW(model, device, args)
+        elif args.method == 'approx_pgd':
+            method = APPROX_PGD(model, device, args)
+        elif args.method == 'sampling_pnp_flow':
+            method = SAMPLING_PNP_FLOW(model, device, args)
+        elif args.method == 'mmse_average':
+            method = MMSE_AVERAGE(model, device, args)
         else:
             raise ValueError("The method your entered does not exist")
 

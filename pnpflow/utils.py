@@ -452,6 +452,7 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
         if batch_size == 1:
             fig = plt.figure()
             plt.imshow(rec_img[0])
+            plt.axis('off')
         elif batch_size == 2:
             fig, ax = plt.subplots(1, 2)
             ax[0].imshow(rec_img[0].numpy())
@@ -474,7 +475,7 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
                 ax_.set_yticks([])
 
         plt.savefig(os.path.join(args.save_path_ip,
-                    f"{args.problem}_{args.method}_batch{args.batch}_iter{iter}.png")),
+                    f"{args.problem}_{args.method}_batch{args.batch}_iter{iter}.png"), bbox_inches='tight', pad_inches=0)
         plt.close(fig)
 
     list_word = ['clean', 'noisy', args.method]
@@ -484,6 +485,7 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
             if batch_size == 1:
                 fig = plt.figure()
                 plt.imshow(img[0].numpy())
+                plt.axis('off')
             elif batch_size == 2:
                 fig, ax = plt.subplots(1, 2)
                 ax[0].imshow(img[0].numpy())
@@ -503,7 +505,7 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
                     ax_.set_yticks([])
 
             plt.savefig(os.path.join(
-                args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_final.png")),
+                args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_final.png"), bbox_inches='tight', pad_inches=0)
             plt.close(fig)
 
     # save images one by one, in .eps, adding the name of the method (args.method) and the PSNR value to the path
@@ -525,22 +527,22 @@ def save_images(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
                 psnr_rec = PSNR(clean_img[i], rec_img[i], data_range=1.)
 
                 for k, img in enumerate([clean_img, noisy_img, rec_img]):
-
-                    fig = plt.figure()
-                    plt.imshow(img[i])
-                    plt.axis('off')
-                    if k == 0 and args.method == 'pnp_flow':
-                        plt.savefig(os.path.join(args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}.eps"),
-                                    bbox_inches='tight', pad_inches=0)
-                    if k == 1 and args.method == 'pnp_flow':
-                        plt.savefig(os.path.join(args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}_pnsr{psnr_noisy:4.2f}.eps"),
-                                    bbox_inches='tight', pad_inches=0)
-                    if k == 2:
-                        print(os.path.join(
-                            args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}_pnsr{psnr_rec:4.2f}.eps"))
-                        plt.savefig(os.path.join(args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}_iter{iter}_pnsr{psnr_rec:4.2f}.eps"),
-                                    bbox_inches='tight', pad_inches=0)
-                    plt.close(fig)
+                    pass
+                    # fig = plt.figure()
+                    # plt.imshow(img[i])
+                    # plt.axis('off')
+                    # if k == 0 and args.method == 'pnp_flow':
+                        # plt.savefig(os.path.join(args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}.eps"),
+                                    # bbox_inches='tight', pad_inches=0)
+                    # if k == 1 and args.method == 'pnp_flow':
+                        # plt.savefig(os.path.join(args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}_pnsr{psnr_noisy:4.2f}.eps"),
+                                    # bbox_inches='tight', pad_inches=0)
+                    # if k == 2:
+                        # print(os.path.join(
+                            # args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}_pnsr{psnr_rec:4.2f}.eps"))
+                        # plt.savefig(os.path.join(args.save_path_ip, f"{args.problem}_{list_word[k]}_batch{args.batch}_im{i}_iter{iter}_pnsr{psnr_rec:4.2f}.eps"),
+                                    # bbox_inches='tight', pad_inches=0)
+                    # plt.close(fig)
 
 
 def preprocess(img, args):
@@ -636,8 +638,14 @@ def compute_average_psnr(args):
                 args.save_path_ip, f'psnr_{word}_batch{batch}.txt')
 
             with open(filename, 'r') as f:
-                for line in f:
+                # Only read the last experiment values
+                last_iteration = None
+                for line in list(f)[::-1]:
                     iteration, psnr = map(float, line.strip().split())
+                    if last_iteration is not None and int(iteration) >= last_iteration:
+                        break
+                    else:
+                        last_iteration = int(iteration)
                     psnr_by_iteration[int(iteration)].append(psnr)
         psnr_averages = {iteration: np.mean(
             psnrs) for iteration, psnrs in psnr_by_iteration.items()}
@@ -682,7 +690,7 @@ def compute_lpips(clean_img, noisy_img, rec_img, args, H_adj, iter='final'):
     lpips_model_path = os.path.expanduser('~/.cache/torch/hub/checkpoints/')
     if not os.path.exists(lpips_model_path) or not any(fname.startswith('alex') for fname in os.listdir(lpips_model_path)):
         print("Downloading LPIPS model for the first time...")
-    loss_fn_alex = lpips.LPIPS(net='alex').to(DEVICE)
+    loss_fn_alex = lpips.LPIPS(net='alex', verbose=False).to(DEVICE)
 
     # Ensure images are in the appropriate range and format for LPIPS calculation
     clean_img = postprocess(clean_img.clone(), args)
@@ -736,8 +744,14 @@ def compute_average_lpips(args):
                 args.save_path_ip, f'lpips_{word}_batch{batch}.txt')
 
             with open(filename, 'r') as f:
-                for line in f:
+                # Only reads the last experiment values
+                last_iteration = None
+                for line in list(f)[::-1]:
                     iteration, lpips = map(float, line.strip().split())
+                    if last_iteration is not None and int(iteration) >= last_iteration:
+                        break
+                    else:
+                        last_iteration = int(iteration)
                     lpips_by_iteration[int(iteration)].append(lpips)
 
         # Calculate the average LPIPS score for each iteration
@@ -827,8 +841,14 @@ def compute_average_ssim(args):
                 args.save_path_ip, f'ssim_{word}_batch{batch}.txt')
 
             with open(filename, 'r') as f:
-                for line in f:
+                # Only read the last experiment values
+                last_iteration = None
+                for line in list(f)[::-1]:
                     iteration, ssim = map(float, line.strip().split())
+                    if last_iteration is not None and int(iteration) >= last_iteration:
+                        break
+                    else:
+                        last_iteration = int(iteration)
                     ssim_by_iteration[int(iteration)].append(ssim)
         ssim_averages = {iteration: np.mean(
             ssims) for iteration, ssims in ssim_by_iteration.items()}

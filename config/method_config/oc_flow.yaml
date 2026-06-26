@@ -1,0 +1,8 @@
+METHOD:
+  max_iter: 1000
+  ode_steps: 10
+  max_grad_norm: 5.0
+  gamma: 0.03
+  optim: sgd
+  max_optim_iter: 5
+  optim_lr: 1.0

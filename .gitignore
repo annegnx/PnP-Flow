@@ -1,6 +1,7 @@
 model/
 data/
 results/
+saved_results/
 *.zip
 *.npy
 *.pth

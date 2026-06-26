@@ -1,0 +1,6 @@
+METHOD:
+    steps_pnp: 100
+    lr_pnp: 1.0
+    gamma_style: 'alpha_1_minus_t'
+    alpha: 0.5
+    interpolation_mode: 'random'
