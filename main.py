@@ -17,13 +17,11 @@ from pnpflow.methods.ot_ode import OT_ODE
 from pnpflow.methods.flow_priors import FLOW_PRIORS
 from pnpflow.methods.pnp_gs import PROX_PNP
 from pnpflow.methods.pnp_diff import PNP_DIFF
-from pnpflow.methods.base_denoiser import BASE_DENOISER
 from pnpflow.methods.fig import FIG
 from pnpflow.methods.oc_flow import OC_FLOW
 from pnpflow.methods.approx_pgd import APPROX_PGD
 from pnpflow.methods.pnp_flow_grad import PNP_FLOW_GRAD
 from pnpflow.methods.sampling_pnp_flow import SAMPLING_PNP_FLOW
-from pnpflow.methods.direct_grad import DIRECT_GRAD
 from pnpflow.methods.mmse_average import MMSE_AVERAGE
 from pnpflow.utils import gaussian_blur, define_model, load_model
 import warnings
@@ -130,7 +128,7 @@ def main():
             if args.noise_type == 'laplace':
                 sigma_noise = 0.3
             elif args.noise_type == 'gaussian':
-                sigma_noise = 0.2 #!!!!!! denoising noise level
+                sigma_noise = 0.2
             degradation = Denoising()
 
         elif args.problem == "inpainting":
@@ -215,8 +213,6 @@ def main():
             method = PROX_PNP(generative_method, device, args)
         elif args.method == 'pnp_diff':
             method = PNP_DIFF(model, device, args)
-        elif args.method == 'base_denoiser':
-            method = BASE_DENOISER(model, device, args)
         elif args.method == 'pnp_flow_grad':
             method = PNP_FLOW_GRAD(model, device, args)
         elif args.method == 'fig':
@@ -227,8 +223,6 @@ def main():
             method = APPROX_PGD(model, device, args)
         elif args.method == 'sampling_pnp_flow':
             method = SAMPLING_PNP_FLOW(model, device, args)
-        elif args.method == 'direct_grad':
-            method = DIRECT_GRAD(model, device, args)
         elif args.method == 'mmse_average':
             method = MMSE_AVERAGE(model, device, args)
         else:
