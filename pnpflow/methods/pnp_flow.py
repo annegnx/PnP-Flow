@@ -36,14 +36,13 @@ class PNP_FLOW(object):
         return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
 
     def get_time_schedule(self, k, N):
-        alpha = 6.0
-        l = 0.99
+        alpha = 1.0
 
-        # t = (k/N) ** alpha
+        t = (k/N) ** alpha
 
         # t = 1 - l ** k
 
-        t = k ** alpha / (k ** alpha + (N - k) ** alpha) 
+        # t = k ** alpha / (k ** alpha + (N - k) ** alpha) 
         
         return t
 
@@ -54,7 +53,8 @@ class PNP_FLOW(object):
             return (1 - t) / t
 
     def get_alpha_schedule(self, t, sigma_noise):
-        return (1 - t)**2 / ((sigma_noise * t) ** 2 + (1 - t)**2)
+        beta = 1.0
+        return (1 - t)**2 / ((sigma_noise * t) ** 2 + beta * (1 - t)**2)
 
     def get_schedule(self, k, N, sigma_noise):
         t = self.get_time_schedule(k, N)
@@ -163,8 +163,8 @@ class PNP_FLOW(object):
 
             # intialize the image with the adjoint operator
             # x = H_adj(torch.ones_like(noisy_img)).to(self.device)
-            # x = torch.randn_like(clean_img).to(self.device)
-            x = H_adj(noisy_img)
+            x = torch.randn_like(clean_img).to(self.device)
+            # x = H_adj(noisy_img)
 
             # specific seed for fixed interpolation noise
             gen = torch.Generator(device="cpu")
@@ -182,19 +182,12 @@ class PNP_FLOW(object):
                 for count, iteration in enumerate(range(int(steps))):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
+                    t = delta * iteration
                     t1 = torch.ones(
-                        len(x), device=self.device) * delta * iteration
+                        len(x), device=self.device) * t
                     
                     if self.args.denoise_mode == 'gd':
                         lr_t = self.learning_rate_strat(self.args.lr_pnp, t1)
-
-                        # New step_size/scheduling choice
-                        t = delta * iteration
-                        t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
-                        print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
-                        lr_t = alpha
-
-                        t1 = t * torch.ones(len(x), device=self.device)
                     else:
                         lr_t = 1.0
                     
@@ -223,17 +216,17 @@ class PNP_FLOW(object):
                         time_counter_2 = perf_counter()
                         time_per_batch += time_counter_2 - time_counter_1
 
-                    if self.args.save_results:
-                        restored_img = x.detach().clone()
-                        # utils.save_images(
-                        #     clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-                        if iteration % 1 == 0 or self.should_save_image(iteration, steps):
-                            utils.compute_psnr(clean_img, noisy_img,
-                                               restored_img, self.args, H_adj, iter=iteration)
-                            utils.compute_ssim(
-                                clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-                            # utils.compute_lpips(clean_img, noisy_img,
-                            #                     restored_img, self.args, H_adj, iter=iteration)
+                    # if self.args.save_results:
+                    #     restored_img = x.detach().clone()
+                    #     utils.compute_psnr(clean_img, noisy_img,
+                    #                        restored_img, self.args, H_adj, iter=iteration)
+                    #     utils.compute_ssim(
+                    #         clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                    #     # utils.compute_lpips(clean_img, noisy_img,
+                    #     #                     restored_img, self.args, H_adj, iter=iteration)
+                    #     if self.should_save_image(iteration, steps):
+                    #         utils.save_images(
+                    #             clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
 
             if self.args.compute_memory:
                 dict_memory = {}

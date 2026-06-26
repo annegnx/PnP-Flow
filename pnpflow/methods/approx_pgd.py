@@ -159,7 +159,6 @@ class APPROX_PGD(object):
 
                     x = x - lmbda * tau * self.grad_datafit(x, noisy_img, H, H_adj, 0)
 
-
                     x_ref = x.clone()
                     steps = self.inner_steps(k, eta)
                     if steps > 1:

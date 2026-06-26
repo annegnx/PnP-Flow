@@ -7,7 +7,7 @@ import pnpflow.image_generation.models.utils as mutils
 import pnpflow.utils as utils
 
 
-class DIRECT_GRAD(object):
+class MMSE_AVERAGE(object):
 
     def __init__(self, model, device, args):
         self.device = device
@@ -25,28 +25,9 @@ class DIRECT_GRAD(object):
             v = model_fn(x.type(torch.float), t * 999)
             return v
 
-    def learning_rate_strat(self, lr, t):
-        t = t.view(-1, 1, 1, 1)
-        gamma_styles = {
-            '1_minus_t': lambda lr, t: lr * (1 - t),
-            'sqrt_1_minus_t': lambda lr, t: lr * torch.sqrt(1 - t),
-            'constant': lambda lr, t: lr,
-            'alpha_1_minus_t': lambda lr, t: lr * (1 - t)**self.args.alpha
-        }
-        return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
-
-    def grad_datafit(self, x, y, H, H_adj, l=0.0, x_ref=0.0):
-        if self.args.noise_type == 'gaussian':
-            return H_adj(H(x) - y) + l * (x - x_ref) #/ (self.args.sigma_noise**2)
-        elif self.args.noise_type == 'laplace':
-            return H_adj(2*torch.heaviside(H(x)-y, torch.zeros_like(H(x)))-1) + l*x#/self.args.sigma_noise
-        else:
-            raise ValueError('Noise type not supported')
-
-    def interpolation_step(self, x, t, eps=0):
-        sigma_sample = 1.0
+    def interpolation_step(self, x, t, eps=None):
         if self.args.interpolation_mode == 'random':
-            eps = torch.randn_like(x) * sigma_sample
+            eps = torch.randn_like(x)
             return t * x + eps * (1 - t), eps
         elif self.args.interpolation_mode == 'zero':
             return t * x, 0
@@ -61,19 +42,19 @@ class DIRECT_GRAD(object):
         v = self.model_forward(x, t)
         return x + (1 - t.view(-1, 1, 1, 1)) * v
 
-    def mmse(self, x, t, eps=0):
+    def mmse(self, x, t, num_samples=5):
+        # TODO: parametrize num_samples
         out = torch.zeros_like(x)
-        for _ in range(self.args.num_samples):
-            x_tilde, _ = self.interpolation_step(x, t.view(-1, 1, 1, 1), eps=eps)
+        tt = t.view(-1, 1, 1, 1)
+        for _ in range(num_samples):
+            x_tilde = tt * x + (1 - tt) * torch.randn_like(x)
             out += self.denoiser(x_tilde, t)
-        return out / self.args.num_samples
+        return out / num_samples
 
     def solve_ip(self, test_loader, degradation, sigma_noise, H_funcs=None):
         H = degradation.H
         H_adj = degradation.H_adj
         self.args.sigma_noise = sigma_noise
-        self.num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
-        steps, delta = self.args.steps_pnp, 1 / self.args.steps_pnp
 
         loader = iter(test_loader)
         for batch in range(self.args.max_batch):
@@ -98,10 +79,9 @@ class DIRECT_GRAD(object):
                 self.device), clean_img.to('cpu')
 
             # intialize the image with the adjoint operator
-            x = torch.randn_like(clean_img).to(self.device)
-            with torch.no_grad():
-                u = self.mmse(H_adj(noisy_img).to(self.device), torch.ones(len(x), device=self.device) * (1 / (1 + sigma_noise)))
-            tau = sigma_noise ** 2
+            # x = H_adj(torch.ones_like(noisy_img)).to(self.device)
+            x = H_adj(noisy_img)
+            # x = torch.randn_like(clean_img).to(self.device)
 
             if self.args.compute_time:
                 torch.cuda.synchronize()
@@ -111,43 +91,37 @@ class DIRECT_GRAD(object):
                 torch.cuda.reset_max_memory_allocated(self.device)
 
             with torch.no_grad():
-                for count, iteration in enumerate(range(int(steps))):
+                max_iter = self.args.max_iter
+                for k in range(max_iter):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
-                    k = iteration + 1
-                    N = steps + 1
-                    sigma = ((N - k) / k)
-                    alpha = sigma ** 2 / (sigma ** 2 + tau)
-                    lmbda = sigma / N
-                    t = 1 / (1 + sigma)
+                    # print(f'{k}, {sigma_noise:.6f}, {lmbda * tau:.6f}')
+                    sigma_k = np.sqrt(sigma_noise ** 2 / (k + 1))
+                    alpha_k = 1 / (k + 2)
+                    t_k = 1 / (1 + sigma_k)
+                    t1 = torch.ones(len(x), device=self.device) * t_k
 
-                    print(f'{sigma:.5f}, {alpha:.5f}, {lmbda:.5f}')
+                    x = (1 - alpha_k) * self.mmse(x, t1) + alpha_k * x
 
-                    t1 = torch.ones(len(x), device=self.device) * t
-
-                    grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=0)
-                    mmse = self.mmse(x, t1)
-                    # Direct-Grad
-                    # x = (1 - alpha * tau / (sigma ** 2)) * x - alpha * grad_x + alpha * tau / (sigma ** 2) * mmse
-                    x = mmse - alpha * grad_x
-
+                    if self.args.save_results:
+                        pass
+                        # restored_img = x.detach().clone()
+                        # if self.should_save_image(k, max_iter):
+                        #     utils.save_images(clean_img, noisy_img, restored_img,
+                        #                 self.args, H_adj, iter=k)
+                        # utils.compute_psnr(clean_img, noisy_img,
+                        #                         restored_img, self.args, H_adj, iter=k)
+                        # utils.compute_ssim(
+                        #             clean_img, noisy_img, restored_img, self.args, H_adj, iter=k)
+                        # utils.compute_lpips(clean_img, noisy_img,
+                        #                             restored_img, self.args, H_adj, iter=k)
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
                         time_counter_2 = perf_counter()
                         time_per_batch += time_counter_2 - time_counter_1
-
-                    if self.args.save_results:
-                        restored_img = x.detach().clone()
-                        utils.compute_psnr(clean_img, noisy_img,
-                                       restored_img, self.args, H_adj, iter=iteration)
-                        utils.compute_ssim(
-                                    clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-                        if self.should_save_image(iteration, int(steps)):
-                            utils.save_images(
-                                        clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
-
+            
             if self.args.compute_memory:
                 dict_memory = {}
                 dict_memory["batch"] = batch
@@ -166,11 +140,11 @@ class DIRECT_GRAD(object):
                 utils.save_images(clean_img, noisy_img, restored_img,
                                   self.args, H_adj, iter='final')
                 utils.compute_psnr(clean_img, noisy_img,
-                                   restored_img, self.args, H_adj, iter=iteration)
+                                   restored_img, self.args, H_adj, iter=k)
                 utils.compute_ssim(
-                    clean_img, noisy_img, restored_img, self.args, H_adj, iter=iteration)
+                    clean_img, noisy_img, restored_img, self.args, H_adj, iter=k)
                 utils.compute_lpips(clean_img, noisy_img,
-                                    restored_img, self.args, H_adj, iter=iteration)
+                                    restored_img, self.args, H_adj, iter=k)
 
         if self.args.save_results:
             utils.compute_average_psnr(self.args)
@@ -182,7 +156,7 @@ class DIRECT_GRAD(object):
             utils.compute_average_time(self.args)
 
     def should_save_image(self, iteration, steps):
-        return (steps >= 10) and iteration % (steps // 10) == 0
+        return iteration % (steps // 10) == 0
 
     def run_method(self, data_loaders, degradation, sigma_noise, H_funcs=None):
 

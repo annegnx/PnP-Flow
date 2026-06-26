@@ -49,12 +49,12 @@ class DataLoaders:
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
             test_loader = DataLoader(
                 test_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
 
         elif self.dataset_name == 'celebahq':
@@ -72,7 +72,7 @@ class DataLoaders:
             test_loader = DataLoader(
                 test_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
 
         elif self.dataset_name == 'afhq_cat':
@@ -106,7 +106,7 @@ class DataLoaders:
             train_loader = DataLoader(
                 train_dataset,
                 batch_size=self.batch_size_train,
-                shuffle=True,
+                shuffle=False,
                 collate_fn=custom_collate, drop_last=True)
 
         else:

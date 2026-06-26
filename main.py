@@ -24,6 +24,7 @@ from pnpflow.methods.approx_pgd import APPROX_PGD
 from pnpflow.methods.pnp_flow_grad import PNP_FLOW_GRAD
 from pnpflow.methods.sampling_pnp_flow import SAMPLING_PNP_FLOW
 from pnpflow.methods.direct_grad import DIRECT_GRAD
+from pnpflow.methods.mmse_average import MMSE_AVERAGE
 from pnpflow.utils import gaussian_blur, define_model, load_model
 import warnings
 warnings.filterwarnings("ignore", module="matplotlib\\..*")
@@ -67,6 +68,7 @@ def main():
     args = parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("device", device)
+    print("seed", args.seed)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -128,7 +130,7 @@ def main():
             if args.noise_type == 'laplace':
                 sigma_noise = 0.3
             elif args.noise_type == 'gaussian':
-                sigma_noise = 0.2
+                sigma_noise = 0.2 #!!!!!! denoising noise level
             degradation = Denoising()
 
         elif args.problem == "inpainting":
@@ -227,6 +229,8 @@ def main():
             method = SAMPLING_PNP_FLOW(model, device, args)
         elif args.method == 'direct_grad':
             method = DIRECT_GRAD(model, device, args)
+        elif args.method == 'mmse_average':
+            method = MMSE_AVERAGE(model, device, args)
         else:
             raise ValueError("The method your entered does not exist")
 

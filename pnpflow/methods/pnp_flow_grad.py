@@ -37,14 +37,13 @@ class PNP_FLOW_GRAD(object):
 
     def get_time_schedule(self, k, N):
         beta = 1.0
-        l = 0.7
 
         t = (k/N) ** beta
 
         # t = 1 - l ** k
 
-        # t = k ** beta / (k ** beta + (N - k) ** beta) 
-        
+        # t = k ** beta / (k ** beta + (N - k) ** beta)
+
         return t
 
     def get_sigma_schedule(self, t):
@@ -56,7 +55,8 @@ class PNP_FLOW_GRAD(object):
     def get_alpha_schedule(self, t, s_min, s_max=20.0):
         # Classic choice
         tau = s_min ** 2
-        return (1 - t)**2 / (tau * t ** 2 + (1 - t) ** 2)
+        beta = 1.0
+        return (1 - t)**2 / (tau * t ** 2 + beta * (1 - t) ** 2)
 
     def get_schedule(self, k, N, sigma_noise):
         t = self.get_time_schedule(k, N)
@@ -137,10 +137,14 @@ class PNP_FLOW_GRAD(object):
                 self.device), clean_img.to('cpu')
 
             # intialize the image with the adjoint operator
+            # x = H_adj(noisy_img).to(self.device)
             x = torch.randn_like(clean_img).to(self.device)
-            y_dagger = H_adj(noisy_img).to(self.device)
-            u = x.clone()
-            x_pred = u
+
+            # y_dagger = H_adj(noisy_img).to(self.device)
+            n = torch.randn_like(clean_img).to(self.device)
+            y_dagger = n
+
+            # x_pred = x.clone()
 
             if self.args.compute_time:
                 torch.cuda.synchronize()
@@ -154,32 +158,49 @@ class PNP_FLOW_GRAD(object):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
-                    t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
-                    lmbda = 1 / (iteration + 1) ** 1.0
+                    # t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
+                    # lmbda = 1 / (int(steps)) ** 0.25
+                    # print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
+
+                    k = iteration + 1
+                    N = steps + 1
+
+                    lmbda_0 = self.args.lmbda_0
+                    kappa = self.args.kappa
+                    p = self.args.pexp
+
+                    gamma = p/2
+                    tau = sigma_noise ** 2
+                    sigma = ((N - k) / k) ** (1.0)
+                    alpha = sigma ** 2 / (tau + sigma ** 2 + kappa * sigma ** p)
+                    lmbda = lmbda_0 / k ** gamma
+                    t = 1 / (1 + sigma)
+
+                    # t, sigma, alpha = self.get_schedule(iteration, steps, sigma_noise)
+                    # lmbda = 0
+
+                    # print(f'{sigma:.5f}, {alpha:.5f}, {lmbda:.5f}')
+                    # rho = alpha * (L_f + (1 - alpha) / alpha + lmbda)
+                    # print('checking step_size validity...', rho < 2, rho)
 
                     t1 = torch.ones(len(x), device=self.device) * t
 
-
-                    tmp = x.clone()
-                    beta = 0.0
-                    # x = (1 + beta) * x - beta * x_pred
+                    # tmp = x.clone()
                     grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=y_dagger)
-                    mmse = self.mmse(x, t1, beta * x_pred)
+                    mmse = self.mmse(x, t1)
                     # Generalised-MMSE-Average
-                    # x = alpha * (x - grad_x) + (1 - alpha) * self.mmse(x + (1 - t)/t * x_pred, t1)
+                    x = alpha * (x - grad_x) + (1 - alpha) * mmse
                     # PnP-Flow-Grad
-                    x = mmse - alpha * grad_x
-                    # Direct-Grad
-                    # x = (1 - alpha * (tau / sigma**2 + lmbda)) * x - alpha * grad_x + alpha * tau / sigma ** 2 * mmse
+                    # x = mmse - alpha * grad_x
 
-                    x_pred = tmp
+                    # x_pred = tmp
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
                         time_counter_2 = perf_counter()
                         time_per_batch += time_counter_2 - time_counter_1
 
-                    if self.args.save_results:
+                    if False and self.args.save_results: #!! change this after hyperparam search
                         restored_img = x.detach().clone()
                         utils.compute_psnr(clean_img, noisy_img,
                                        restored_img, self.args, H_adj, iter=iteration)
