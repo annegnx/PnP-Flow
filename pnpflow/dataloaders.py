@@ -84,9 +84,9 @@ class DataLoaders:
             ])
 
             # transform = False
-            img_dir_test = '.data/afhq_cat/test/cat/'
-            img_dir_val = '.data/afhq_cat/val/cat/'
-            img_dir_train = '.data/afhq_cat/train/cat/'
+            img_dir_test = './data/afhq_cat/test/cat/'
+            img_dir_val = './data/afhq_cat/val/cat/'
+            img_dir_train = './data/afhq_cat/train/cat/'
             test_dataset = AFHQDataset(
                 img_dir_test, batchsize=self.batch_size_test, transform=transform)
             val_dataset = AFHQDataset(
