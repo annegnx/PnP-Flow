@@ -44,6 +44,7 @@ class FLOW_MATCHING(object):
         self.args = args
         self.lr = args.lr
         self.model = model.to(device)
+        self.coupling = self.args.model 
 
     def train_FM_model(self, train_loader, opt, num_epoch):
 
@@ -79,20 +80,25 @@ class FLOW_MATCHING(object):
                 t1 = torch.rand(x.shape[0], 1, 1, 1, device=self.device)
 
                 # compute coupling
-                x0 = z.clone()
-                x1 = x.clone()
-                a, b = np.ones(len(x0)) / len(x0), np.ones(len(x0)) / len(x0)
+                if self.coupling == "ot":
+                    x0 = z.clone()
+                    x1 = x.clone()
+                    a, b = np.ones(len(x0)) / len(x0), np.ones(len(x0)) / len(x0)
 
-                M = ot.dist(x0.view(len(x0), -1).cpu().data.numpy(),
-                            x1.view(len(x1), -1).cpu().data.numpy())
-                plan = ot.emd(a, b, M)
-                p = plan.flatten()
-                p = p / p.sum()
-                choices = np.random.choice(
-                    plan.shape[0] * plan.shape[1], p=p, size=len(x0), replace=True)
-                i, j = np.divmod(choices, plan.shape[1])
-                x0 = x0[i]
-                x1 = x1[j]
+                    M = ot.dist(x0.view(len(x0), -1).cpu().data.numpy(),
+                                x1.view(len(x1), -1).cpu().data.numpy())
+                    plan = ot.emd(a, b, M)
+                    p = plan.flatten()
+                    p = p / p.sum()
+                    choices = np.random.choice(
+                        plan.shape[0] * plan.shape[1], p=p, size=len(x0), replace=True)
+                    i, j = np.divmod(choices, plan.shape[1])
+                    x0 = x0[i]
+                    x1 = x1[j]
+                else: 
+                    x0 = z.clone()
+                    x1 = x.clone()
+
                 xt = t1 * x1 + (1 - t1) * x0
                 loss = torch.sum(
                     (self.model(xt, t1.squeeze()) - (x1 - x0))**2) / x.shape[0]
