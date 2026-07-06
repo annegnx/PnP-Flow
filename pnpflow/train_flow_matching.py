@@ -10,8 +10,10 @@
 # arXiv preprint arXiv:2403.18705.
 # (https://github.com/JChemseddine/Conditional_Wasserstein_Distances/blob/main/utils/utils_FID.py)
 
-import torch
 import os
+
+
+import torch
 import skimage.io as io
 import numpy as np
 import torch
@@ -32,7 +34,7 @@ from torchvision.utils import save_image
 
 img_dir_celeba = './data/celeba/img_align_celeba/'
 partition_csv_celeba = './data/celeba/list_eval_partition.csv'
-img_dir_afhq = '.data/afhq_cat/test/cat/'
+img_dir_afhq = './data/afhq_cat/test/cat/'
 
 
 class FLOW_MATCHING(object):
@@ -54,7 +56,7 @@ class FLOW_MATCHING(object):
                 img_dir_celeba, partition_csv_celeba, partition=2, transform=transforms.Compose([transforms.CenterCrop(178), transforms.Resize([self.args.dim_image, self.args.dim_image]),])), name=f"celeba{self.args.dim_image}_test")
         elif self.args.dataset == "afhq_cat":
             test_feat = AFHQDataset(
-                img_dir_afhq, batchsize=self.batch_size_test, transform = transforms.Compose([transforms.Resize((256, 256)),
+                img_dir_afhq, batchsize=self.args.batch_size_test, transform = transforms.Compose([transforms.Resize((256, 256)),
                 transforms.ToTensor()]))
         else:
             raise ValueError(f"Unknown dataset {self.args.dataset}")
@@ -96,8 +98,8 @@ class FLOW_MATCHING(object):
                     x0 = x0[i]
                     x1 = x1[j]
                 else: 
-                    x0 = z.clone()
-                    x1 = x.clone()
+                    x0 = z
+                    x1 = x
 
                 xt = t1 * x1 + (1 - t1) * x0
                 loss = torch.sum(
@@ -112,11 +114,11 @@ class FLOW_MATCHING(object):
                         f'Epoch: {ep}, iter: {iteration}, Loss: {loss.item()}\n')
 
             # save samples, plot them, and compute FID on small dataset
-            self.sample_plot(x, ep)
-            if ep % 5 == 0:
+            if ep % 50 == 0:
                 # save model
                 torch.save(self.model.state_dict(),
                            self.model_path + 'model_{}.pt'.format(ep))
+                self.sample_plot(x, ep)
                 # evaluate FID
                 print("Computing FID 5K")
                 num_gen = 5_000
@@ -158,12 +160,12 @@ class FLOW_MATCHING(object):
         utils.save_samples(reco.detach().cpu(), x[:16].cpu(), self.save_path + 'results_samplings/' +
                            'samplings_ep_{}.pdf'.format(ep), self.args)
 
-        # check the plots by saving training samples
-        if ep == 0:
-            gt = x[:16]
-            gt = utils.postprocess(gt, self.args)
-            utils.save_samples(gt.detach().cpu(), gt.detach().cpu(), self.save_path + 'results_samplings/' +
-                               'train_samples_ep_{}.pdf'.format(ep), self.args)
+        # # check the plots by saving training samples
+        # if ep == 0:
+        #     gt = x[:16]
+        #     gt = utils.postprocess(gt, self.args)
+        #     utils.save_samples(gt.detach().cpu(), gt.detach().cpu(), self.save_path + 'results_samplings/' +
+        #                        'train_samples_ep_{}.pdf'.format(ep), self.args)
 
     def generate_samples(self, integration_method="dopri5", tol=1e-5,
                          n_samples=1028, batch_size=None, num_channels=3,
@@ -214,16 +216,14 @@ class FLOW_MATCHING(object):
     def train(self, data_loaders):
 
         self.save_path = self.args.output_root + \
-            'results/{}/ot/'.format(
-                self.args.dataset)
+            f'results/{self.args.dataset}/{self.coupling}/'
         try:
             os.makedirs(self.save_path)
         except BaseException:
             pass
 
         self.model_path = self.args.output_root + \
-            'model/{}/ot/'.format(
-                self.args.dataset)
+            f'model/{self.args.dataset}/{self.coupling}/'
         try:
             os.makedirs(self.model_path)
         except BaseException:

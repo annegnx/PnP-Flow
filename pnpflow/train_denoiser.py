@@ -223,7 +223,7 @@ class GRADIENT_STEP_DENOISER(object):
 
     def train(self, data_loaders):
 
-        self.save_path = self.args.root + \
+        self.save_path = self.args.output_root + \
             'results/{}/{}'.format(
                 self.args.dataset, self.args.model)
         try:
@@ -231,7 +231,7 @@ class GRADIENT_STEP_DENOISER(object):
         except BaseException:
             pass
 
-        self.model_path = self.args.root + \
+        self.model_path = self.args.output_root + \
             'model/{}/{}'.format(
                 self.args.dataset, self.args.model)
         try:
