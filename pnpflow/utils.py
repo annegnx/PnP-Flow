@@ -168,7 +168,7 @@ def merge_cfg_from_list(cfg: CfgNode,
 
 
 def define_model(args):
-    if args.model == "ot" or args.model == "gradient_step":
+    if args.model == "ot" or args.model == "gradient_step" or args.model == "indep":
         model = UNet(input_channels=args.num_channels,
                      input_height=args.dim_image,
                      ch=32,
@@ -567,7 +567,7 @@ def postprocess(img, args):
             config = get_config_afhq_cat()
             # inverse_scaler = datasets.get_data_inverse_scaler(config)
         img = (img + 1.) / 2.
-    if args.model == "ot" or args.model == "gradient_step" or args.model == "diffusion":
+    if args.model in {"ot", "gradient_step", "diffusion", "indep"}:
         if args.dataset == "afhq_cat":
             img = (img + 1) / 2
         else:

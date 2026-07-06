@@ -14,12 +14,13 @@ class PNP_FLOW(object):
         self.args = args
         self.model = model.to(device)
         self.method = args.method
+        self.coupling = self.args.model 
 
     def model_forward(self, x, t):
-        if self.args.model == "ot":
+        if self.coupling in {"ot", "indep"}:
             return self.model(x, t)
 
-        elif self.args.model == "rectified":
+        elif self.coupling == "rectified":
             model_fn = mutils.get_model_fn(self.model, train=False)
             t_ = t[:, None, None, None]
             v = model_fn(x.type(torch.float), t * 999)

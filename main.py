@@ -74,7 +74,7 @@ def main():
         print('Training...')
         data_loaders = DataLoaders(
             args.dataset, args.batch_size_train, args.batch_size_train).load_data()
-        if args.model == "ot":
+        if args.model == "ot" or args.model == "indep":
             generative_method = FLOW_MATCHING(model, device, args)
         elif args.model == "gradient_step":
             generative_method = GRADIENT_STEP_DENOISER(model, device, args)
@@ -86,7 +86,7 @@ def main():
 
     if args.eval:
 
-        if args.model == "ot" or args.model == "gradient_step":
+        if args.model == "ot" or args.model == "indep" or args.model == "gradient_step":
             model_path = args.root + \
                 'model/{}/{}/model_final.pt'.format(
                     args.dataset, args.model)
