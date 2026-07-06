@@ -213,7 +213,7 @@ class FLOW_MATCHING(object):
 
     def train(self, data_loaders):
 
-        self.save_path = self.args.root + \
+        self.save_path = self.args.output_root + \
             'results/{}/ot/'.format(
                 self.args.dataset)
         try:
@@ -221,7 +221,7 @@ class FLOW_MATCHING(object):
         except BaseException:
             pass
 
-        self.model_path = self.args.root + \
+        self.model_path = self.args.output_root + \
             'model/{}/ot/'.format(
                 self.args.dataset)
         try:

@@ -2,6 +2,7 @@ EVAL:
     dataset: 'afhq_cat'                # dataset name (mnist, celeba, celeba_hq, afhq_cat)
     model: 'ot'             #model (ot, rectified)
     root: './'                      # root directory for the experiment
+    output_root: './'                      # root directory for the experiment
     seed: 0                         # random seed
     batch_size_train: 16               # batch size for training
     num_epoch: 100                  # number of epochs for training

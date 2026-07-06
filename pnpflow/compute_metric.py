@@ -10,7 +10,7 @@ class ComputeMetric:
         self.device = device
         self.args = args
         self.generative_method = generative_method
-        self.save_path = self.args.root + \
+        self.save_path = self.args.output_root + \
             'results/{}/'.format(
                 self.args.dataset)
 
