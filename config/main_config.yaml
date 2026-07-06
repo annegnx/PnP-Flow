@@ -5,7 +5,7 @@ EVAL:
     output_root: './'                      # root directory for the experiment
     seed: 0                         # random seed
     batch_size_train: 128               # batch size for training
-    batch_size_test: 64               # batch size for training
+    batch_size_test: 32               # batch size for training
     num_epoch: 100                  # number of epochs for training
     lr: 0.0001                      # learning rate for training
     train: False                    # train the flow model if True

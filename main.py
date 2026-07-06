@@ -87,7 +87,7 @@ def main():
     if args.eval:
 
         if args.model == "ot" or args.model == "indep" or args.model == "gradient_step":
-            model_path = args.root + \
+            model_path = args.output_root + \
                 'model/{}/{}/model_final.pt'.format(
                     args.dataset, args.model)
             load_model(args.model, model, state, download=False,
@@ -95,7 +95,7 @@ def main():
             model.eval()
 
         elif args.model == "rectified":
-            model_path = args.root + 'model/{}/{}/model_final.pth'.format(
+            model_path = args.output_root + 'model/{}/{}/model_final.pth'.format(
                 args.dataset, args.model)
             load_model(args.model, model, state, download=False,
                        checkpoint_path=model_path, dataset=None, device=device)
@@ -185,10 +185,10 @@ def main():
             args.dataset, args.batch_size_ip, args.batch_size_ip).load_data()
         if args.noise_type == 'laplace':
             args.save_path = os.path.join(
-                args.root, 'results_laplace', args.dataset, args.model, args.problem, args.method, args.eval_split)
+                args.output_root, 'results_laplace', args.dataset, args.model, args.problem, args.method, args.eval_split)
         elif args.noise_type == 'gaussian':
             args.save_path = os.path.join(
-                args.root, 'results', args.dataset, args.model, args.problem, args.method, args.eval_split)
+                args.output_root, 'results', args.dataset, args.model, args.problem, args.method, args.eval_split)
         try:
             os.makedirs(args.save_path)
         except FileExistsError:
