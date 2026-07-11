@@ -182,8 +182,7 @@ class PNP_FLOW(object):
                 for count, iteration in enumerate(range(int(steps))):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
-                    # t = delta * iteration
-                    t = 1 / (1 + sigma_noise)
+                    t = delta * iteration
                     t1 = torch.ones(
                         len(x), device=self.device) * t
                     
