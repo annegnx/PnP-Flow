@@ -1,0 +1,6 @@
+METHOD:
+    steps_pnp: 100
+    interpolation_mode: 'random'
+    num_samples: 5
+    lmbda_0: 1.0
+    pexp: 1.1

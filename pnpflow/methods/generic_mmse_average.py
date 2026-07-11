@@ -7,7 +7,7 @@ import pnpflow.image_generation.models.utils as mutils
 import pnpflow.utils as utils
 
 
-class PNP_FLOW_GRAD(object):
+class GENERIC_MMSE_AVERAGE(object):
 
     def __init__(self, model, device, args):
         self.device = device
@@ -34,35 +34,6 @@ class PNP_FLOW_GRAD(object):
             'alpha_1_minus_t': lambda lr, t: lr * (1 - t)**self.args.alpha
         }
         return gamma_styles.get(self.args.gamma_style, lambda lr, t: lr)(lr, t)
-
-    def get_time_schedule(self, k, N):
-        beta = 1.0
-
-        t = (k/N) ** beta
-
-        # t = 1 - l ** k
-
-        # t = k ** beta / (k ** beta + (N - k) ** beta)
-
-        return t
-
-    def get_sigma_schedule(self, t):
-        if t == 0:
-            return torch.inf
-        else:
-            return (1 - t) / t
-
-    def get_alpha_schedule(self, t, s_min, s_max=20.0):
-        # Classic choice
-        tau = s_min ** 2
-        beta = 1.0
-        return (1 - t)**2 / (tau * t ** 2 + beta * (1 - t) ** 2)
-
-    def get_schedule(self, k, N, sigma_noise):
-        t = self.get_time_schedule(k, N)
-        sigma = self.get_sigma_schedule(t)
-        alpha = self.get_alpha_schedule(t, sigma_noise)
-        return t, sigma, alpha
 
     def grad_datafit(self, x, y, H, H_adj, l=0.0, x_ref=0.0):
         if self.args.noise_type == 'gaussian':
@@ -103,6 +74,7 @@ class PNP_FLOW_GRAD(object):
         self.args.sigma_noise = sigma_noise
         self.num_samples = self.args.num_samples if self.args.interpolation_mode == 'random' else 1
         steps, delta = self.args.steps_pnp, 1 / self.args.steps_pnp
+        tau = sigma_noise ** 2
 
         # if self.args.noise_type == 'gaussian':
         #     self.args.lr_pnp = sigma_noise**2 * self.args.lr_pnp
@@ -144,8 +116,6 @@ class PNP_FLOW_GRAD(object):
             n = torch.randn_like(clean_img).to(self.device)
             y_dagger = n
 
-            # x_pred = x.clone()
-
             if self.args.compute_time:
                 torch.cuda.synchronize()
                 time_per_batch = 0
@@ -154,53 +124,37 @@ class PNP_FLOW_GRAD(object):
                 torch.cuda.reset_max_memory_allocated(self.device)
 
             with torch.no_grad():
-                for count, iteration in enumerate(range(int(steps))):
+                for count, iteration in enumerate(range(1, int(steps) + 1)):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
-                    # t, sigma, alpha = self.get_schedule(iteration, int(steps), sigma_noise)
-                    # lmbda = 1 / (int(steps)) ** 0.25
-                    # print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
-
-                    k = iteration + 1
-                    N = steps + 1
-
                     lmbda_0 = self.args.lmbda_0
-                    kappa = self.args.kappa
                     p = self.args.pexp
-
                     gamma = p/2
-                    tau = sigma_noise ** 2
-                    sigma = ((N - k) / k) ** (1.0)
-                    alpha = sigma ** 2 / (tau + sigma ** 2 + kappa * sigma ** p)
-                    lmbda = lmbda_0 / k ** gamma
+
+                    sigma = (steps - iteration) / iteration
+                    b_1 = 100.0
+                    b_2 = 0.001
+                    f_ = (sigma ** 2)/b_1 * np.exp(b_2 * sigma ** (-2))
+                    alpha = sigma ** 2 / (tau + sigma ** 2 + f_)
+                    lmbda = lmbda_0 / iteration ** gamma
                     t = 1 / (1 + sigma)
 
-                    # t, sigma, alpha = self.get_schedule(iteration, steps, sigma_noise)
-                    # lmbda = 0
-
-                    # print(f'{sigma:.5f}, {alpha:.5f}, {lmbda:.5f}')
-                    # rho = alpha * (L_f + (1 - alpha) / alpha + lmbda)
-                    # print('checking step_size validity...', rho < 2, rho)
+                    print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
 
                     t1 = torch.ones(len(x), device=self.device) * t
 
-                    # tmp = x.clone()
+                    # Generic-MMSE-Average
                     grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=y_dagger)
                     mmse = self.mmse(x, t1)
-                    # Generalised-MMSE-Average
                     x = alpha * (x - grad_x) + (1 - alpha) * mmse
-                    # PnP-Flow-Grad
-                    # x = mmse - alpha * grad_x
-
-                    # x_pred = tmp
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
                         time_counter_2 = perf_counter()
                         time_per_batch += time_counter_2 - time_counter_1
 
-                    if False and self.args.save_results: #!! change this after hyperparam search
+                    if True and self.args.save_results: #!! change this after hyperparam search
                         restored_img = x.detach().clone()
                         utils.compute_psnr(clean_img, noisy_img,
                                        restored_img, self.args, H_adj, iter=iteration)

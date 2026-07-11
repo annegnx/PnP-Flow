@@ -96,7 +96,7 @@ class DataLoaders:
             test_loader = DataLoader(
                 test_dataset,
                 batch_size=self.batch_size_test,
-                shuffle=False,
+                shuffle=True,
                 collate_fn=custom_collate)
             val_loader = DataLoader(
                 val_dataset,

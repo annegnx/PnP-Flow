@@ -20,7 +20,7 @@ from pnpflow.methods.pnp_diff import PNP_DIFF
 from pnpflow.methods.fig import FIG
 from pnpflow.methods.oc_flow import OC_FLOW
 from pnpflow.methods.approx_pgd import APPROX_PGD
-from pnpflow.methods.pnp_flow_grad import PNP_FLOW_GRAD
+from pnpflow.methods.generic_mmse_average import GENERIC_MMSE_AVERAGE
 from pnpflow.methods.sampling_pnp_flow import SAMPLING_PNP_FLOW
 from pnpflow.methods.mmse_average import MMSE_AVERAGE
 from pnpflow.utils import gaussian_blur, define_model, load_model
@@ -95,7 +95,7 @@ def main():
 
         if args.model == "ot" or args.model == "gradient_step":
             model_path = args.root + \
-                'model/{}/{}/model_final.pt'.format(
+                'model/{}/{}/model_final_nobatch.pt'.format(
                     args.dataset, args.model)
             load_model(args.model, model, state, download=False,
                        checkpoint_path=model_path, dataset=None,  device=device)
@@ -214,7 +214,7 @@ def main():
         elif args.method == 'pnp_diff':
             method = PNP_DIFF(model, device, args)
         elif args.method == 'pnp_flow_grad':
-            method = PNP_FLOW_GRAD(model, device, args)
+            method = GENERIC_MMSE_AVERAGE(model, device, args)
         elif args.method == 'fig':
             method = FIG(model, device, args)
         elif args.method == 'oc_flow':
