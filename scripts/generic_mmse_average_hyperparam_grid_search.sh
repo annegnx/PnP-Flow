@@ -1,21 +1,17 @@
-dataset=afhq_cat
+dataset=celeba
 model=ot
 eval_split=val
 max_batch=1
 batch_size_ip=4
+steps_pnp=100
+lmbda_0=0.0
 problem=inpainting
 
-method=pnp_flow_grad
-for steps_pnp in 100 200 500 1000
+method=generic_mmse_average
+for b_1 in 1.0 #0.2 0.3 0.5 0.6 0.8 1.0 1.2 1.5 2.0
 do
-for lmbda_0 in 1.0 0.1 0.01
+for b_2 in 1.3 #0.1 0.2 0.5 0.8 1.0 1.5 2.0
 do
-for kappa in 10.0 #0.1 0.5 1.0 2.0 5.0
-do
-for p in 1.1 1.5 1.9
-do
-python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} interpolation_mode zero lmbda_0 ${lmbda_0} kappa ${kappa} pexp ${p} max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp ${steps_pnp}
-done
-done
+python main.py --opts dataset ${dataset} eval_split ${eval_split} model ${model} problem ${problem} method ${method} interpolation_mode zero lmbda_0 ${lmbda_0} b_1 ${b_1} b_2 ${b_2} max_batch ${max_batch} batch_size_ip ${batch_size_ip} steps_pnp ${steps_pnp}
 done
 done

@@ -2,5 +2,7 @@ METHOD:
     steps_pnp: 100
     interpolation_mode: 'random'
     num_samples: 5
-    lmbda_0: 1.0
+    lmbda_0: 0.0
     pexp: 1.1
+    b_1: 1.0
+    b_2: 1.0

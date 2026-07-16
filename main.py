@@ -128,7 +128,7 @@ def main():
             if args.noise_type == 'laplace':
                 sigma_noise = 0.3
             elif args.noise_type == 'gaussian':
-                sigma_noise = 0.2
+                sigma_noise = 0.01 #!! change
             degradation = Denoising()
 
         elif args.problem == "inpainting":
@@ -213,7 +213,7 @@ def main():
             method = PROX_PNP(generative_method, device, args)
         elif args.method == 'pnp_diff':
             method = PNP_DIFF(model, device, args)
-        elif args.method == 'pnp_flow_grad':
+        elif args.method == 'generic_mmse_average':
             method = GENERIC_MMSE_AVERAGE(model, device, args)
         elif args.method == 'fig':
             method = FIG(model, device, args)

@@ -1,5 +1,5 @@
 EVAL:
-    dataset: 'afhq_cat'                # dataset name (mnist, celeba, celeba_hq, afhq_cat)
+    dataset: 'celeba'                # dataset name (mnist, celeba, celeba_hq, afhq_cat)
     model: 'ot'             #model (ot, rectified, gradient_step, diffusion)
     root: './'                      # root directory for the experiment
     seed: 0                         # random seed

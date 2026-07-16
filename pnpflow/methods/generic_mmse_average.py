@@ -6,6 +6,8 @@ from time import perf_counter
 import pnpflow.image_generation.models.utils as mutils
 import pnpflow.utils as utils
 
+from torchdiffeq import odeint_adjoint as odeint
+
 
 class GENERIC_MMSE_AVERAGE(object):
 
@@ -68,6 +70,72 @@ class GENERIC_MMSE_AVERAGE(object):
             out += self.denoiser(x_tilde, t)
         return out / self.args.num_samples
 
+    def compute_probability(self, x_hat):
+        def hutchinson(model, x, t, n_samples=3):
+            bsz = x.shape[0]
+            out = torch.zeros(bsz, device=self.device)
+
+            for _ in range(n_samples):
+                u = x.detach().requires_grad_(True)
+                eps = torch.randint(0, 2, u.shape, device=u.device, dtype=u.dtype) * 2 - 1
+
+                with torch.enable_grad():
+                    v = model(u, t)
+                    vprod = torch.sum(v * eps)
+                    grad = torch.autograd.grad(vprod, u)[0]
+                out += torch.sum(grad * eps, dim=list(range(1, u.dim())))
+            return out / n_samples
+    
+        class AugmentedDynamics(torch.nn.Module):
+            def __init__(self, model, n_hutchinson_samples=3):
+                super().__init__()
+                self.model = model
+                self.n_samples = n_hutchinson_samples
+
+            def forward(self, t, state):
+                x, logp = state
+                t = torch.ones(len(x), device=x.device) * t
+
+                with torch.set_grad_enabled(True):
+                    x = x.detach().requires_grad_(True)
+                    v = self.model(x, t)
+
+                    trace_est = hutchinson(
+                        self.model, x, t, n_samples=self.n_samples
+                    )
+
+                # d(logp)/dt = -tr(dv/dx)
+                dlogp_dt = -trace_est
+
+                return v.detach(), dlogp_dt.detach()
+
+        def compute_log_likelihood(model, x1, n_hutchinson_samples=3):
+            B = x1.shape[0]
+            D = x1[0].numel()
+
+            dynamics = AugmentedDynamics(model, n_hutchinson_samples)
+
+            logp0 = torch.zeros(B, device=x1.device, dtype=x1.dtype)
+            t_span = torch.tensor([1.0, 0.0], device=x1.device)  # integrate backward
+
+            x0, delta_logp = odeint(
+                dynamics, (x1, logp0), t_span,
+                method='dopri5', atol=1e-4, rtol=1e-4
+            )
+
+            x0 = x0[-1]           # state at t=0
+            delta_logp = delta_logp[-1]  # accumulated -tr integral
+
+            # log p0(x0) under standard Gaussian base
+            log_p0 = -0.5 * D * torch.log(torch.tensor(2 * torch.pi)) \
+                    - 0.5 * torch.sum(x0.view(B, -1) ** 2, dim=1)
+
+            log_p1 = log_p0 + delta_logp
+            return log_p1
+        
+        return compute_log_likelihood(self.model, x_hat)
+
+
     def solve_ip(self, test_loader, degradation, sigma_noise, H_funcs=None):
         H = degradation.H
         H_adj = degradation.H_adj
@@ -124,20 +192,21 @@ class GENERIC_MMSE_AVERAGE(object):
                 torch.cuda.reset_max_memory_allocated(self.device)
 
             with torch.no_grad():
-                for count, iteration in enumerate(range(1, int(steps) + 1)):
+                for count, iteration in enumerate(range(1, int(steps))):
                     if self.args.compute_time:
                         time_counter_1 = perf_counter()
 
                     lmbda_0 = self.args.lmbda_0
                     p = self.args.pexp
-                    gamma = p/2
+                    gamma = 1.0
 
-                    sigma = (steps - iteration) / iteration
-                    b_1 = 100.0
-                    b_2 = 0.001
-                    f_ = (sigma ** 2)/b_1 * np.exp(b_2 * sigma ** (-2))
+                    sigma = ((steps - iteration) / iteration) ** (1.0)
+                    b_1 = self.args.b_1 #1.0
+                    b_2 = self.args.b_2 #1.0
+                    # f_ = (sigma ** 2)/b_1 * np.exp(b_2 * sigma ** (-2))
+                    f_ = b_1 * sigma ** (2 * b_2)
                     alpha = sigma ** 2 / (tau + sigma ** 2 + f_)
-                    lmbda = lmbda_0 / iteration ** gamma
+                    lmbda = lmbda_0 * sigma ** gamma
                     t = 1 / (1 + sigma)
 
                     print(f'{t:.6f}, {sigma:.6f}, {alpha:.6f}')
@@ -148,6 +217,9 @@ class GENERIC_MMSE_AVERAGE(object):
                     grad_x = self.grad_datafit(x, noisy_img, H, H_adj, l=lmbda, x_ref=y_dagger)
                     mmse = self.mmse(x, t1)
                     x = alpha * (x - grad_x) + (1 - alpha) * mmse
+
+                    p_x = np.exp(self.compute_probability(x).detach().cpu().numpy())
+                    print(p_x)
 
                     if self.args.compute_time:
                         torch.cuda.synchronize()
